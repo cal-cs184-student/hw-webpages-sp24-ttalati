@@ -121,16 +121,23 @@ available to render an image.
             
             <p>The implementation efficiency of this point-in-triangle test was <i>no worse</i>than one that checks each sample within the bounding box of the triangle. This is because the array of sample points that were traversed were: from: min(x2, x0, x1)  to max(x2, x0, x1)  and from min(y0, y1, y2) to max(y2, y0, y1). Clearly this would make the number of samples checked equal to the number in the bounding box of the triangle as we iterate through all the points in the rectangle formed with the lower left coordinate being the lowest x and y coordinate in the vertices of the triangle and the upper right coordinate being the highest x and y coordinate in the vertices of the triangle, which is exactly the bounding box of the triangle, covering the same number of samples my implementation does. </p>
             <img class="image" src="task1_test4.png" alt="Task1 Test 4 screenshot">
-            <p><i>Notice that in this naive non-super sampling method we see aliasing at really thin areas of the triangle, which are high frequency areas.</i></p>
+            <p style="margin-block-start: -1em; text-align: center;"><i>Notice that in this naive non-super sampling method we see aliasing at really thin areas of the triangle, which are high frequency areas.</i></p>
 
             <h4>Extra Credit</h4>
             <p>To be implemented, barycentric coords + table of differences in runtimes</p>
         </section>
         
         <section>
-            <h3>Section 2: Methodology</h3>
-            <p>This section explains the methodology used in your project.</p>
-            <p>You can include a table to present data:</p>
+            <h3>Task 2: Antialiasing by Supersampling</h3>
+            <p>Much of the machinery to implement supersampling was done in the previous task. Now depending on the sample rate this task would take sample_rate number of samples inside the 1 x 1 pixel box. Since the supersampling method we were tasked with implementing would take the super samples at deterministic positions within 1 unit pixel box and we already had the machinery developed to iterate through all the pixels inside of the triangle’s bounding box, once we arrived at a specific pixel (so two next for loops deep). Two other for loops were created to implement the super samples. These would iterate through the combinations of (x + 1/(2n) + (i - 1)/n, y + 1/(2n) + (j - 1)/n). Where n would be the square root of the sampling_rate and variables i and j represent the ith and jth point (1-indexed) in the x and y direction respectively (for a total of square root sampling_rate in each direction).
+</p>
+            <p>Now because we are collecting more data per pixel, we also needed to change the data structure that stores the color value at each sample. This is where the sample_buffer was utilized. The size of the sample_buffer, which is just a vector, was dynamically changed to reflect the sampling_rate. Specifically its size was width * height * sample_rate and the super sample corresponding to a particular pixel was stored at sample_rate * (y * width + x) + k, where k is the row wise sample number within the (x,y) pixel. 
+</p>
+            <p>Another issue was with rasterizing pixels and lines. We did not want those to be supersampled. Which means that if in the non-supersampled case a particular point in the framebuffer rasterized the line or pixel, it must remain the same with the same color in the supersample case. To account for this detail, the fill_pixel function, with both rasterizing pixels and lines utilized was modified. Specifically every super sample corresponding to the pixel that is being filled would have the same color that the pixel was being filled with. The rationale for that will make sense after the next paragraph.
+</p>
+
+            <p>The final piece to change was the color that would be resolved to the frame_buffer since supersampling does not change the underlying dimensionality of the frame buffer. The color corresponding to each pixel in the frame buffer was the average color of all the samples corresponding to the pixel. This way of calculating the final rasterized color has anti-aliasing advantages over the non-super sampled case. This is because the ability to take multiple samples within each pixel better captures the change in frequency/color of the underlying image as we are now essentially sampling at a higher frequency, which in term increases our nyquist frequency and hence helps introduce some anti-aliasing. Since we are able to better capture fast changing signals (when the color drastically changes at an edge for instance) the appearance of jaggedness will be reduced as these edges will more softly be resolved as the colors blend and blur at them. The pictures below show the antialiasing. 
+</p>
             <table>
                 <thead>
                     <tr>
