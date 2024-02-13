@@ -36,6 +36,20 @@
             width: 100%;
         }
         h1, h2, h3, h4, h5, h6 {
+            font-style: italic;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
@@ -46,13 +60,42 @@
     </header>
     
     <div class="container">
-        <h2><i>Main Content Area</i></h2>
-        <p>This is where your main content goes. You can add text, images, videos, etc. below.</p>
-        <p><i>Your write-up goes here...</i></p>
-        <img class="image" src="image1.jpg" alt="Image 1">
-        <p><i>Caption for image 1 goes here...</i></p>
-        <img class="image" src="image2.jpg" alt="Image 2">
-        <p><i>Caption for image 2 goes here...</i></p>
+        <h2>Main Content Area</h2>
+        
+        <section>
+            <h3>Section 1: Introduction</h3>
+            <p>This is the introduction section of your write-up.</p>
+            <p>It may contain multiple paragraphs.</p>
+            <p>You can <strong>bold</strong> some words for emphasis.</p>
+            <ul>
+                <li>Bullet point 1</li>
+                <li>Bullet point 2</li>
+                <li>Bullet point 3</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h3>Section 2: Methodology</h3>
+            <p>This section explains the methodology used in your project.</p>
+            <p>You can include a table to present data:</p>
+            <table>
+                <tr>
+                    <th>Column 1</th>
+                    <th>Column 2</th>
+                </tr>
+                <tr>
+                    <td>Data 1</td>
+                    <td>Data 2</td>
+                </tr>
+                <tr>
+                    <td>Data 3</td>
+                    <td>Data 4</td>
+                </tr>
+            </table>
+        </section>
+        
+        <!-- Add more sections as needed -->
+        
     </div>
     
     <footer>
