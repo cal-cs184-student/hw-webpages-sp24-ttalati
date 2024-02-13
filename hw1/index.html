@@ -13,6 +13,10 @@
             display: flex; 
             justify-content: space-between; 
             margin-bottom: -10px;
+            border-bottom: 1px solid black; 
+        }
+        .label {
+            text-align: center;
         }
         .image-container {
             width: 30%;
@@ -151,9 +155,18 @@ available to render an image.
             <p>The final piece to change was the color that would be resolved to the frame_buffer since supersampling does not change the underlying dimensionality of the frame buffer. The color corresponding to each pixel in the frame buffer was the average color of all the samples corresponding to the pixel. This way of calculating the final rasterized color has anti-aliasing advantages over the non-super sampled case. This is because the ability to take multiple samples within each pixel better captures the change in frequency/color of the underlying image as we are now essentially sampling at a higher frequency, which in term increases our nyquist frequency and hence helps introduce some anti-aliasing. Since we are able to better capture fast changing signals (when the color drastically changes at an edge for instance) the appearance of jaggedness will be reduced as these edges will more softly be resolved as the colors blend and blur at them. The pictures below show the antialiasing. 
 </p>
             <div class='im-container'>
+                <div>
                 <img class="image-container" src="task2_1.png" alt="task2_1">
+                <div class="label"> Sampling rate = 1 </div>
+                </div>
+                <div>    
                 <img class="image-container" src="task2_4.png" alt="task2_4">
+                <div class="label"> Sampling rate = 4 </div>
+                </div>
+                <div>
                 <img class="image-container" src="task2_16.png" alt="task2_16">
+                <div class="label"> Sampling rate = 16 </div>
+                </div>
             </div>
             <p><i>Caption for image 2 goes here...</i></p>
             <table>
