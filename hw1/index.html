@@ -1,17 +1,62 @@
-# Welcome to My Webpage
-
-## Main Content Area
-
-This is where your main content goes. You can add text, images, videos, etc. below.
-
-![Image 1](image1.jpg)
-
-This is some text below the first image.
-
-![Image 2](image2.jpg)
-
-This is some text below the second image.
-
----
-
-&copy; 2024 My Webpage. All rights reserved.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Webpage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .image {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to <i>My Webpage</i></h1>
+    </header>
+    
+    <div class="container">
+        <h2><i>Main Content Area</i></h2>
+        <p>This is where your main content goes. You can add text, images, videos, etc. below.</p>
+        <p><i>Your write-up goes here...</i></p>
+        <img class="image" src="image1.jpg" alt="Image 1">
+        <p><i>Caption for image 1 goes here...</i></p>
+        <img class="image" src="image2.jpg" alt="Image 2">
+        <p><i>Caption for image 2 goes here...</i></p>
+    </div>
+    
+    <footer>
+        <p>&copy; 2024 <i>My Webpage</i>. All rights reserved.</p>
+    </footer>
+</body>
+</html>
