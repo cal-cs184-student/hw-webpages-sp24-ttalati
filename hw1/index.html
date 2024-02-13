@@ -6,19 +6,21 @@
     <title>CS 184 Homework 1, Tanush Talati</title>
     <style>
         .caption {
-            style="margin-block-start: -1em; 
+            margin-block-start: -1em; 
             text-align: center;
         }
         .im-container {
             display: flex; 
             justify-content: space-between; 
             margin-bottom: -10px;
+            flex-wrap: wrap;
+            text-align: center;
         }
         .label {
             text-align: center;
         }
         .image-container {
-            width: 50%;
+            width: 40%;
         }
         body {
             font-family: Arial, sans-serif;
@@ -168,6 +170,10 @@ available to render an image.
                 </div>
             </div>
             <p class="caption"><i>We see the effect of higher magnitudes of supersampling. Namely zones where the frequency of the image rapidly changes have a much smoother transition with higher super-sampling rates due to the anti-aliasing effect it has since it corresponds to a higher sampling frequency. With higher super-sampling rates the fast changes in the frequency are smoothed-out and the change is visually blurred rather than being abrupt.</i></p>
+            
+            <h4>Extra Credit</h4>
+            <p>Thinking to do jittered sampling seems not too bad.</p>
+            
             <table>
                 <thead>
                     <tr>
@@ -186,8 +192,12 @@ available to render an image.
                     </tr>
                 </tbody>
             </table>
-            <img class="image" src="image2.jpg" alt="Image 2">
-            <p class="caption"><i>Caption for image 2 goes here...</i></p>
+        </section>
+
+        <section>
+            <h3>Task 3: Transforms</h3>
+
+            
         </section>
         
         <!-- Add more sections as needed -->
