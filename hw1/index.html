@@ -262,6 +262,24 @@ available to render an image.
 
             <p>The complexity of pixel sampling really depends on the scheme being used. However regardless of whether we use nearest neighbor or bilinear pixel sampling, the memory should not change as we are just sampling for the texture map that already exists in memory and are not incurring any additional overhead. If we decide to use bilinear vs nearest neighbor, the time to complete will be a bit longer since bilinear requires us to sample the 4 closest texels as well as compute 3 linear interpolations and nearest neighbor only 1 sample. Due to the additional amount of sampling in bilinear interpolation, we also enjoy the added benefit of more antialiasing power. 
 </p>
+
+     <div class='im-container'>
+                <div>
+                <div class="label"> Level 0, Point NN </div>
+                <img class="image-container" src="lzpn.png" alt="lzpn">
+                </div>
+                <div>  
+                <div class="label"> Level 0, Point Bilinear </div>    
+                <img class="image-container" src="lzpl.png" alt="lzpl">
+                </div>
+                <div>
+                <div class="label"> Level Nearest, Point NN </div>
+                <img class="image-container" src="lnpn.png" alt="lnpn">
+                </div>
+                 <div class="label"> Level Nearest, Point Bilinear </div>
+                <img class="image-container" src="lnpl.png" alt="lnpl">
+                </div>
+        </div>
             
         </section>
         
