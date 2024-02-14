@@ -139,7 +139,6 @@ available to render an image.
             <p>The implementation efficiency of this point-in-triangle test was <i>no worse</i>than one that checks each sample within the bounding box of the triangle. This is because the array of sample points that were traversed were: from: min(x2, x0, x1)  to max(x2, x0, x1)  and from min(y0, y1, y2) to max(y2, y0, y1). Clearly this would make the number of samples checked equal to the number in the bounding box of the triangle as we iterate through all the points in the rectangle formed with the lower left coordinate being the lowest x and y coordinate in the vertices of the triangle and the upper right coordinate being the highest x and y coordinate in the vertices of the triangle, which is exactly the bounding box of the triangle, covering the same number of samples my implementation does. </p>
             <img class="image" src="task1_test4.png" alt="Task1 Test 4 screenshot">
             <p style="margin-block-start: -1em; text-align: center;"><i>Notice that in this naive non-super sampling method we see aliasing at really thin areas of the triangle, which are high frequency areas.</i></p>
-            <p class="caption">Comparing the timing for rendering basic test 4. This test chosen because it has the largest triangles, providing good insight into algorithm speed.</p>
         </section>
         
         <section>
