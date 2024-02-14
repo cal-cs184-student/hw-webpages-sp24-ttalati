@@ -139,9 +139,7 @@ available to render an image.
             <p>The implementation efficiency of this point-in-triangle test was <i>no worse</i>than one that checks each sample within the bounding box of the triangle. This is because the array of sample points that were traversed were: from: min(x2, x0, x1)  to max(x2, x0, x1)  and from min(y0, y1, y2) to max(y2, y0, y1). Clearly this would make the number of samples checked equal to the number in the bounding box of the triangle as we iterate through all the points in the rectangle formed with the lower left coordinate being the lowest x and y coordinate in the vertices of the triangle and the upper right coordinate being the highest x and y coordinate in the vertices of the triangle, which is exactly the bounding box of the triangle, covering the same number of samples my implementation does. </p>
             <img class="image" src="task1_test4.png" alt="Task1 Test 4 screenshot">
             <p style="margin-block-start: -1em; text-align: center;"><i>Notice that in this naive non-super sampling method we see aliasing at really thin areas of the triangle, which are high frequency areas.</i></p>
-
-            <h4>Extra Credit</h4>
-            <p>To be implemented, barycentric coords + table of differences in runtimes</p>
+            <p class="caption">Comparing the timing for rendering basic test 4. This test chosen because it has the largest triangles, providing good insight into algorithm speed.</p>
         </section>
         
         <section>
@@ -171,27 +169,6 @@ available to render an image.
             </div>
             <p class="caption"><i>We see the effect of higher magnitudes of supersampling. Namely zones where the frequency of the image rapidly changes have a much smoother transition with higher super-sampling rates due to the anti-aliasing effect it has since it corresponds to a higher sampling frequency. With higher super-sampling rates the fast changes in the frequency are smoothed-out and the change is visually blurred rather than being abrupt.</i></p>
             
-            <h4>Extra Credit</h4>
-            <p>Thinking to do jittered sampling seems not too bad.</p>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Column 1</th>
-                        <th>Column 2</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Data 1</td>
-                        <td>Data 2</td>
-                    </tr>
-                    <tr>
-                        <td>Data 3</td>
-                        <td>Data 4</td>
-                    </tr>
-                </tbody>
-            </table>
         </section>
 
         <section>
@@ -200,8 +177,6 @@ available to render an image.
             <img class="image" src="flying_robot.png" alt="flying_robot">
             <p class="caption">The attempt was to make the cube man look as if it was flying at an angle up in the sky flat. This is why it was rotated with its hands up in the air and its legs slightly bent. </p>
 
-            <h4>Extra Credit</h4>
-            <p>Potential GUI</p>
         </section>
 
         <section>
