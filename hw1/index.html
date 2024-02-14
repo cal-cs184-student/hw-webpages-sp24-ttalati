@@ -167,6 +167,22 @@ available to render an image.
                 </div>
             </div>
             <p class="caption"><i>We see the effect of higher magnitudes of supersampling. Namely zones where the frequency of the image rapidly changes have a much smoother transition with higher super-sampling rates due to the anti-aliasing effect it has since it corresponds to a higher sampling frequency. With higher super-sampling rates the fast changes in the frequency are smoothed-out and the change is visually blurred rather than being abrupt.</i></p>
+
+            <h4>Extra Credit</h4>
+            <p>The alternative sampling method I implemented was jittered sampling. Essentially jittered sampling is the idea that instead of sampling at deterministic points for our supersampling, we sample uniformly within the sub pixels that are of super sampling. Otherwise, the rest of the supersampling machinery is the same. At lower super sampling rates we do see more jaggedness and the jaggedness is quite random. But at higher super-sampling rates the jittered sampling method does really help reduce aliasing. However the biggest issue with this sampling method is if the border of a triangle goes through the center of the triangle, we see random white spots since there is a good chance that none of the sampled pixels land inside the triangle or ½ land inside and ½ outside leading to a discoloration. Other than that whenever we have sharp frequency changes it seems that with lesser super samples, we are able to better anti-alias it with jittered sampling.
+</p>     
+            <div class='im-container'>
+                <div>
+                <div class="label"> Jitter Sampling rate = 1 </div>
+                <img class="image-container" src="jitter1.png" alt="task2_1">
+                </div>
+                <div>  
+                <div class="label"> Jitter Sampling rate = 9 </div>    
+                <img class="image-container" src="jitter9.png" alt="task2_4">
+                </div>
+            </div>
+
+            <p class="caption">Notice how the jitter sampling tends to perform much worse at lower sampling rates but also does a good job of capturing high frequencies that a deterministic sampling method would not. It also takes less of a super sampling frequency to get the same performance as a deterministic sampling method (9 vs 16 we saw earlier)</p>
             
         </section>
 
