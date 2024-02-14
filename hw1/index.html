@@ -222,7 +222,24 @@ available to render an image.
              <h3>Task 5: Pixel Sampling for Texture Mapping</h3>
             <p> Previously colors were being assigned to the points we were trying to rasterize using barycentric interpolation and attaching color values to the specific points in our geometry. However with texture mapping each vertex in our triangle is associated with a corresponding texture coordinate. This texture coordinate represents another space that we sample from to determine the color of the particular vertex. This means that when we are tasked with rasterizing our triangle the samples we take inside the triangle will be assigned to a corresponding texture coordinate for the sample. This sampling will necessarily be in the continuous domain, however we only have texture coordinate to color mapping for lattice points in the texture coordinate space. Therefore to determine the color of the sample, we need to also sample in the texture space. The two methods of sampling that were implemented were nearest neighbor sampling, which would just return the texture color of the closest lattice texture point to the sample texture coordinate; and bilinear sampling, which would find the 4 closest lattice points and then depending on the distance from each of these point, the final color would be the weighted average of all the colors at the 4 points. In this manner we can view bilinear sampling as taking more samples of the texture space than does the simple nearest neighbor. The process of finding the corresponding texture coordinate for each sample coordinate is described further in the overview section.
 </p>
-            
+            <div class='im-container'>
+                <div>
+                <div class="label"> NN Interpolation, Sampling Rate = 1 </div>
+                <img class="image-container" src="nearest_1.png" alt="nearest_1">
+                </div>
+                <div>  
+                <div class="label"> Bilinear Interpolation, Sampling Rate = 16 </div>    
+                <img class="image-container" src="bilinear_1.png" alt="bilinear_1">
+                </div>
+                <div>
+                <div class="label"> NN Interpolation, Sampling Rate = 16 </div>
+                <img class="image-container" src="nearest_16.png" alt="nearest_16">
+                </div>
+                <div>
+                <div class="label"> Bilinear Interpolation, Sampling Rate = 16 </div>
+                <img class="image-container" src="bilinear_16.png" alt="bilinear_16">
+                </div>
+            </div>
             
         </section>
 
