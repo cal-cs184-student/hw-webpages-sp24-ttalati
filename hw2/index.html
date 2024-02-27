@@ -124,8 +124,8 @@ available to render an image.
             
             <p>We use de Casteljau’s algorithm to transform n control points to n-1 control points in the next subdivision level. These n control points define the Bezier curve we want to analyze. We are also given a parameter t that defines where in the Bezier curve where we want to interpolate along the curve. For every nth point, we also take the (n-1)th point to interpolate and compute the new control point. To interpolate, we use the given function from the spec and run it n-1 times.  This evaluates one step of de Casteljau’s algorithm. The algorithm is continued until the appropriate level of detail is acquired. In the image below, we can see that in each subdivision there is one less point constructing this graph until there is only one point left. Clearly, these steps help determine the curvature of the Bezier curve and the final output is a legitimate output of applying the algorithm.            
             </p>
-		<img class="image" src="test1.PNG" alt="Task1 6-point Test">
-		<img class="image" src="test11.PNG" alt="Task1 Modified 6-point Test">
+		<img class="image" src="task1.PNG" alt="Task1 6-point Test">
+		<img class="image" src="task11.PNG" alt="Task1 Modified 6-point Test">
         </section>
         
         <section>
@@ -162,8 +162,8 @@ available to render an image.
             <h3>Task 3: Area-Weighted Vertex Normals Surfaces with S</h3>
 <p> To implement area-weighted vertex normals, we want to traverse the geometry until we come back to our starting half edge pointer. Throughout our iteration, we check the face associated with our starting half edge pointer and ensure that it is not a boundary. From the current edge, we calculate the vertex it’s on and the next two vertices in its path. This gives us 3 points in a triangle. By calculating the cross product of the line vectors between them, we can calculate the triangle face area by normalizing the stated cross product and dividing by 2. The formula behind this is basic geometry. Then we keep track of a variable that contains the weighted sum of face normals, calculated by taking the product of the calculated area and the normal of the face of the current pointer. Finally at the end, we normalize the final weighted sum.
 </p>
-            <img class="image" src="test3.PNG" alt="Test3 Teapot Shading w/o vertex normals">
-            <img class="image" src="test31.PNG" alt="Test3 Teapot Shading w/ vertex normals">
+            <img class="image" src="task3.PNG" alt="Test3 Teapot Shading w/o vertex normals">
+            <img class="image" src="task31.PNG" alt="Test3 Teapot Shading w/ vertex normals">
 
             <h4>Extra Credit</h4>
             <p>For the GUI I decided to add a feature that could rotate the viewport. Pressing the button R would rotate one degree clockwise whereas press T would rotate it one degree counterclockwise. The way I implemented this was first by adding a listener to the T and R keys in the keyboard_event function. This would change a new variable I made for the class called degree_rot by one degree in the respective direction. Then I also changed the redraw method to left-multiply the ndc_to_screen matrix with the rotation degree that takes the parameter of degree_rot. This would achieve the rotation if I called redraw every time the key_listen event was triggered.</p>
