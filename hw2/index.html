@@ -123,36 +123,22 @@ available to render an image.
             
             
             <p>We use de Casteljau’s algorithm to transform n control points to n-1 control points in the next subdivision level. These n control points define the Bezier curve we want to analyze. We are also given a parameter t that defines where in the Bezier curve where we want to interpolate along the curve. For every nth point, we also take the (n-1)th point to interpolate and compute the new control point. To interpolate, we use the given function from the spec and run it n-1 times.  This evaluates one step of de Casteljau’s algorithm. The algorithm is continued until the appropriate level of detail is acquired. In the image below, we can see that in each subdivision there is one less point constructing this graph until there is only one point left. Clearly, these steps help determine the curvature of the Bezier curve and the final output is a legitimate output of applying the algorithm.            
-            <img class="image" src="test1.PNG" alt="Task1 6-point Test">
+            </p>
+		<img class="image" src="test1.PNG" alt="Task1 6-point Test">
 		<img class="image" src="test11.PNG" alt="Task1 Modified 6-point Test">
         </section>
         
         <section>
             <h3>Task 2: Antialiasing by Supersampling</h3>
-            <p>Much of the machinery to implement supersampling was done in the previous task. Now depending on the sample rate this task would take sample_rate number of samples inside the 1 x 1 pixel box. Since the supersampling method we were tasked with implementing would take the super samples at deterministic positions within 1 unit pixel box and we already had the machinery developed to iterate through all the pixels inside of the triangle’s bounding box, once we arrived at a specific pixel (so two next for loops deep). Two other for loops were created to implement the super samples. These would iterate through the combinations of (x + 1/(2n) + (i - 1)/n, y + 1/(2n) + (j - 1)/n). Where n would be the square root of the sampling_rate and variables i and j represent the ith and jth point (1-indexed) in the x and y direction respectively (for a total of square root sampling_rate in each direction).
-</p>
-            <p>Now because we are collecting more data per pixel, we also needed to change the data structure that stores the color value at each sample. This is where the sample_buffer was utilized. The size of the sample_buffer, which is just a vector, was dynamically changed to reflect the sampling_rate. Specifically its size was width * height * sample_rate and the super sample corresponding to a particular pixel was stored at sample_rate * (y * width + x) + k, where k is the row wise sample number within the (x,y) pixel. 
-</p>
-            <p>Another issue was with rasterizing pixels and lines. We did not want those to be supersampled. Which means that if in the non-supersampled case a particular point in the framebuffer rasterized the line or pixel, it must remain the same with the same color in the supersample case. To account for this detail, the fill_pixel function, with both rasterizing pixels and lines utilized was modified. Specifically every super sample corresponding to the pixel that is being filled would have the same color that the pixel was being filled with. The rationale for that will make sense after the next paragraph.
-</p>
-
-            <p>The final piece to change was the color that would be resolved to the frame_buffer since supersampling does not change the underlying dimensionality of the frame buffer. The color corresponding to each pixel in the frame buffer was the average color of all the samples corresponding to the pixel. This way of calculating the final rasterized color has anti-aliasing advantages over the non-super sampled case. This is because the ability to take multiple samples within each pixel better captures the change in frequency/color of the underlying image as we are now essentially sampling at a higher frequency, which in term increases our nyquist frequency and hence helps introduce some anti-aliasing. Since we are able to better capture fast changing signals (when the color drastically changes at an edge for instance) the appearance of jaggedness will be reduced as these edges will more softly be resolved as the colors blend and blur at them. The pictures below show the antialiasing. 
-</p>
+            <p> De Casteljau’s algorithm extends to Bezier surfaces by using our Code in task 1 to apply on to the u and v directions. Given a set of control points that define a Bezier curve, we loop through every point and calculate a new set of points along the u direction for the given parameter t. For this, we created a new function which fully evaluates de Casteljau’s algorithm for a vector of points at parameter t.  Once we calculate this new set of points, seen as a column of u’s for every row, we run them through the same function we did for the u direction to get one step of the Bezier surface evaluation process. These steps are repeated until the Bezir surface is fully divided into. To visualize our image, we connect the final points and produce an output like below.
+	    </p>
             <div class='im-container'>
                 <div>
-                <div class="label"> Sampling rate = 1 </div>
-                <img class="image-container" src="task2_1.png" alt="task2_1">
+                <div class="label"> Task2 Teapot Test </div>
+                <img class="image-container" src="task2.PNG" alt="task2_1">
                 </div>
-                <div>  
-                <div class="label"> Sampling rate = 4 </div>    
-                <img class="image-container" src="task2_4.png" alt="task2_4">
-                </div>
-                <div>
-                <div class="label"> Sampling rate = 16 </div>
-                <img class="image-container" src="task2_16.png" alt="task2_16">
-                </div>
+                <div> 
             </div>
-            <p class="caption"><i>We see the effect of higher magnitudes of supersampling. Namely zones where the frequency of the image rapidly changes have a much smoother transition with higher super-sampling rates due to the anti-aliasing effect it has since it corresponds to a higher sampling frequency. With higher super-sampling rates the fast changes in the frequency are smoothed-out and the change is visually blurred rather than being abrupt.</i></p>
 
             <h4>Extra Credit</h4>
             <p>The alternative sampling method I implemented was jittered sampling. Essentially jittered sampling is the idea that instead of sampling at deterministic points for our supersampling, we sample uniformly within the sub pixels that are of super sampling. Otherwise, the rest of the supersampling machinery is the same. At lower super sampling rates we do see more jaggedness and the jaggedness is quite random. But at higher super-sampling rates the jittered sampling method does really help reduce aliasing. However the biggest issue with this sampling method is if the border of a triangle goes through the center of the triangle, we see random white spots since there is a good chance that none of the sampled pixels land inside the triangle or ½ land inside and ½ outside leading to a discoloration. Other than that whenever we have sharp frequency changes it seems that with lesser super samples, we are able to better anti-alias it with jittered sampling.
