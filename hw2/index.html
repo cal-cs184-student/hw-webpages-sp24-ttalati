@@ -318,7 +318,35 @@ One thing that helped make this process much smoother was actually giving nice n
         </div>
         <p class="caption">Comparing the various levels of upscaling it is clear that sharp corners have a much larger inward movement effect compared to non sharp ones when we upscale. Due to this disproportionate movement, we see the eventual asymmetry. 
 </p>
-            
+
+		<p>One thing I did to make the cube divide more symmetrically is make each of the faces the sample geometrically by splitting an edge on every face. This way the sharpness of the corners decreases as neighboring vertices are closer to each other and two all vertices will have similar neighbor topologies. One can imagine that increasing the number of triangles that make up our cube symmetrically will do an even better job at maintaining symmetry through various upsampling levels.
+</p>
+		<div class='im-container'>
+                <div>
+                <div class="label"> Level 0, Modified Cube </div>
+                <img class="image-container" src="c0.png" alt="lvl0">
+                </div>
+                <div>  
+                <div class="label"> Level 1 Upscaling </div>    
+                <img class="image-container" src="c1.png" alt="lzpl">
+                </div>
+                <div>
+                <div class="label"> Level 2 Upscaling </div>
+                <img class="image-container" src="c2.png" alt="lnpn">
+                </div>
+                 <div>
+                 <div class="label"> Level 3 Upscaling </div>
+                <img class="image-container" src="c3.png" alt="lnpl">
+                </div>
+		<div>
+                 <div class="label"> Level 4 Upscaling </div>
+                <img class="image-container" src="c4.png" alt="lnpl">
+                </div>
+        </div>
+		 <p class="caption">Notice how my changes helped improve upscale symmetry.
+</p>
+
+		
         </section>
         
         
