@@ -108,13 +108,43 @@ Edge-split was the other half-edge manipulation that we had to implement. Arguab
 </p>
 	    
         <section>
-            <h3>Task 1: Bezier Curves with 1D de Casteljau Subdivision </h3>
+            <h3>Part 1: Bezier Curves with 1D de Casteljau Subdivision </h3>
             
             
-            <p>We use de Casteljau’s algorithm to transform n control points to n-1 control points in the next subdivision level. These n control points define the Bezier curve we want to analyze. We are also given a parameter t that defines where in the Bezier curve where we want to interpolate along the curve. For every nth point, we also take the (n-1)th point to interpolate and compute the new control point. To interpolate, we use the given function from the spec and run it n-1 times.  This evaluates one step of de Casteljau’s algorithm. The algorithm is continued until the appropriate level of detail is acquired. In the image below, we can see that in each subdivision there is one less point constructing this graph until there is only one point left. Clearly, these steps help determine the curvature of the Bezier curve and the final output is a legitimate output of applying the algorithm.            
+            <p>Basically De Casteljau’s algorithm is a recursive subdivision algorithm that given a list of n control points and a parameter ‘t,’ which basically indicates the location along the eventual Bezier Curve we are evaluating at produces n - 1 of the next control points in one step. Recursively applying this step as indicated in the algorithm until we have just 1 point essentially gives us the point that is actually located on the Bezier Curve that we are trying to graph for the specific parameter ‘t.’ To produce n - 1 control points from n control points, we basically linearly interpolate between each two consecutive control points, with ‘t’ acting like our interpolation parameter.             
             </p>
-		<img class="image" src="task1.PNG" alt="Task1 6-point Test">
-		<img class="image" src="task11.PNG" alt="Task1 Modified 6-point Test">
+
+	    <div class='im-container'>
+                <div>
+                <div class="label"> Iteration: 0 </div>
+                <img class="image-container" src="iter0.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label"> Iteration: 1 </div>    
+                <img class="image-container" src="iter1.png" alt="iter1">
+                </div>
+		<div>  
+                <div class="label"> Iteration: 2 </div>    
+                <img class="image-container" src="iter2.png" alt="iter2">
+                </div>
+		<div>  
+                <div class="label"> Iteration: 3 </div>    
+                <img class="image-container" src="iter3.png" alt="iter3">
+                </div>
+		<div>  
+                <div class="label"> Iteration: 4 </div>    
+                <img class="image-container" src="iter4.png" alt="iter4">
+                </div>
+		<div>  
+                <div class="label"> Iteration: 5 </div>    
+                <img class="image-container" src="iter5.png" alt="iter5">
+                </div>
+		<div>  
+                <div class="label"> Iteration: 6 </div>    
+                <img class="image-container" src="iter6.png" alt="iter6">
+                </div>
+            </div>
+		
         </section>
         
         <section>
