@@ -363,9 +363,25 @@ One thing that helped make this process much smoother was actually giving nice n
         </div>
 		 <p class="caption">Notice how my changes helped improve upscale symmetry.
 </p>
-
-		
+		<h4 class="left">Extra Credit: Support meshes with boundary</h4>
+		<p class="left">In implementing supporting upscaling on the boundary at the boundary, I first looked up the rules for assigning new vertex (on the edge structure) and old vertex positions (on the vertex structure itself). This was found in the lecture slides on the lecture for Mesh Processing. Specifically the new position for old vertices corresponds to ⅛ * (sum of adjacent boundary vertex on boundary edges) + ¾ * (current vertex position). Similarly the update rule for a new vertex position is quite simple ½ * (sum of vertex positions that make up the edge). Once I knew these rules, much of the skeleton to add them in our upscale method already existed. Specifically I only had to add conditionals in the existing for loops that calculated new positions for old vertices and also the new positions on edges so they can be set on new vertices. The conditional corresponds to whether or not the edge or vertex I am dealing with is a boundary edge. If it was then we apply our new special logic. The application of the logic was quite straightforward as we just did simple pointer traversal and summing like previously implemented. With these changes, support for boundary upscaling was implemented. 
+</p>
+			<div class='im-container'>
+                <div>
+                <div class="label"> Level 0, Beetle Car </div>
+                <img class="image-container" src="normalbeetle.png" alt="lvl0">
+                </div>
+                <div>  
+                <div class="label"> Level 1 Upscaling on Boundary </div>    
+                <img class="image-container" src="lvl1boundary.png" alt="boundary">
+                </div>
+                <div>
+                <div class="label"> Level 2 Upscaling on Boundary </div>
+                <img class="image-container" src="lvl2boundary.png" alt="boundary2">
+                </div>		
         </section>
+			<p class="caption">Notice how boundary meshes are also being upscaled.
+</p>
         
         
         <!-- Add more sections as needed -->
