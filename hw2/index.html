@@ -243,8 +243,26 @@ One thing that helped make this process much smoother was actually giving nice n
             </div>
             <p class="caption">Showing the edge-flip functionality. Note how the last image has multiple splits within one triangle as well.
 </p>
-           <p> Examining the photos it is pretty clear that bilinear interpolation does a better job at antialiasing compared to nearest neighbor interpolation when the sampling rate is the same. There is also more anti-aliasing when the sampling rate is higher (which is expected behavior since we increase our sampling rate) so the discrepancy between bilinear and nearest neighbor at higher sampling rate is lesser. The reason bilinear does a better job is because in bilinear we sample the closest 4 texel colors to assign the color of the pixel compared to just sampling one, which is inherently a higher sampling rate, leading to more anti-aliasing. Extending from that observation, we will notice larger differences between the two sampling methods when the frequency in the texture space is very high so when the signal changes quickly our sampled output will be less jagged than if we used nearest neighbor as there are more samples we are taking into account to determine the color at out pixel. </p>
-            
+           <div class='im-container'>
+                <div>
+                <div class="label">Teapot Before changes </div>
+                <img class="image-container" src="first.png" alt="first">
+                </div>
+                <div>  
+                <div class="label"> Teapot After Applying Initial Splits </div>    
+                <img class="image-container" src="second.png" alt="second">
+                </div>
+                <div>
+                <div class="label"> Teapot After Applying Flips to Splits </div>
+                <img class="image-container" src="third.png" alt="third">
+                </div>
+		<div>
+                <div class="label"> Teapot After Applying Splits to Flips of Splits </div>
+                <img class="image-container" src="last.png" alt="last">
+                </div>
+            </div>
+            <p class="caption">This sequence of photos shows the use of a  functional half-edge split with a functional half-edge flip to create complex transformations.
+</p>
             
         </section>
 
