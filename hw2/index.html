@@ -178,21 +178,13 @@ Edge-split was the other half-edge manipulation that we had to implement. Arguab
                 </div>
 		<div>  
             </div>
-	<p class="caption">Comparison of two different shading mechanisms used to compute shading on the teapot. Phong Shading, which makes use of vertex normals, which we built the machinery to calculate in this part results in a much more smooth surface visual.
+	<p class="caption">Comparison of two different shading mechanisms used to compute shading on the teapot. Flat shading makes use of face normals. Phong Shading, which makes use of vertex normals, which we built the machinery to calculate in this part results in a much more smooth surface visual.
 </p>
-		
-            <h4>Extra Credit</h4>
-            <p>For the GUI I decided to add a feature that could rotate the viewport. Pressing the button R would rotate one degree clockwise whereas press T would rotate it one degree counterclockwise. The way I implemented this was first by adding a listener to the T and R keys in the keyboard_event function. This would change a new variable I made for the class called degree_rot by one degree in the respective direction. Then I also changed the redraw method to left-multiply the ndc_to_screen matrix with the rotation degree that takes the parameter of degree_rot. This would achieve the rotation if I called redraw every time the key_listen event was triggered.</p>
-
-            <img class="image" src="rotcw.png" alt="flying_robot">
-            <img class="image" src="rotccw.png" alt="flying_robot">
-
-            <p class="caption"> Visuals of the rotation feature. It is capped at 15 degrees both ways to prevent bugs. </p>
             
         </section>
 
         <section>
-            <h3>Task 4: Barycentric Coordinates</h3>
+            <h3>Part 4: Edge Flip</h3>
 
             <p>Essentially barycentric coordinates are another coordinate space for triangles (and multidimensional triangle shapes). It allows us to represent points on a coordinate plane with respect to the vertices of the triangle. These vertices are located at the barycentric coordinates of (1, 0, 0), (0, 1, 0), and (0, 0, 1) respectively. Where the specific indices represent alpha, beta, and gamma. Among all the special properties of these coordinates, one of particular interest is the fact that if alpha + beta + gamma = 1 and are all less than 1, the coordinates represent a point inside of the triangle. In this constrained view, we can think of the barycentric coordinates for a particular point as a weighted sum of all the vertices of the triangle. Indeed, the point (⅓, ⅓, ⅓) actually represents the centroid of the triangle and in the weighted sum view we just took the average of all the points. I described the process of finding the barycentric coordinate of a particular point in the overview section of this writeup. However, along with the fact that points can be viewed as a weighted sum of the vertex, if the vertices are associated with certain properties we can interpolate the property value at a sample point inside the triangle by weighting the sum with the barycentric coordinates. This is done for color interpolation and sampling when each vertex of the triangle is associated with a color and we need to assign a color to the rasterized points inside of the triangle. The picture below better showcases this phenomenon. The top vertex is associated with red, right with blue, and left with green. Notice how points close to any of these vertices contain a color close to that of the vertex but as we move toward the center or along each line there is a mixture. The weights of the mixture are the ones represented by the barycentric coordinates.  </p>
 
