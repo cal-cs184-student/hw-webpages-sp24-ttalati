@@ -276,27 +276,47 @@ One thing that helped make this process much smoother was actually giving nice n
              <h3>Part 6: Loop Subdivision for Mesh Upsampling</h3>
 
         <p>
-		
+	Basically loop subdivision is a method to upsample our given mesh and as mentioned in the overview, relies heavily on our edge-split and flip functionality we worked on. The mechanics of the algorithm to implement mesh upsampling were pretty finely detailed in the spec so it was just a matter of correctly translating those steps into code. Specifically the complexity of trying to upsample lies in two factors: introducing new structures as well as changing the positions of our old structures. However, some of the properties of the new structures depend on the positions and properties of the old ones, which made it important to be careful in the order that changes were made. Specifically, each of the structures had a field that stored the old and new positions as well as a boolean flag which labeled whether or not the structure itself was new or not. Then we computed the new positions of the old vertex (storing into the old vertices’ field) as well as the position of new vertices (which would go inside the edge that would be split to achieve that new vertex). Both the position of the new position of the old vertex and the position of the new vertex were calculated according to the loop division formula that was given. While the subdivision and the edge split and flip of the triangle were described earlier it is easier to calculate out all the positions and then deal with the geometric flipping and splitting that would place the right structures at the right location.	
 	</p>
-     <div class='im-container'>
+
+		<p>Next we would split every edge and once we split the edge, utilizing the edge split subroutine. While doing this we propagate over the position of the new vertex from the value that was stored inside the edge structure previously. One thing that we had to be careful about was not splitting newly created edges, but that could be determined easily (if either of the vertices that make up the edge were newly created then the edge is new and we ignore it). 
+		</p>
+
+	<p>
+	After edge splitting was done, we then flipped edges that connected one new vertex with another old one (also done through using a simple xor on the vertex-is-new flags). And once we determined that an edge needed to be flipped we simply called the flipEdge function we created earlier. Another subtlety here is we had to make sure to only flip new edges since old edges should not be flipped no matter the state of the vertex, which could also be determined by a simple conditional statement on the flags.	
+	</p>
+
+	<p>
+	Finally we have the mesh ready and just need to make the actual position field for all the vertices the one that is stored in their corresponding newPosition field, completing our upsampling. 	
+	</p>
+
+	<p>
+	When looking at the behavior of sharp corners and edges under loop subdivision, it is evident these sharp parts of the geometry have a much harsher/larger change at each level of upsample than non sharp corners and edges. Specifically compared to the original geometry, the upsampled version pulls in these corners and edges much more in an effort to make the overall geometry more rounded. Since sharp corners and edges see a much larger inward pull effect than non sharp ones, we disproportionately change the geometry or shrink the sharper areas compared to the non-sharper ones, leading to asymmetry. This also makes sense as in sharper corners, the locations of the other vertices in comparison to ours are much more different, so when we apply the weighted averaging step, we are going to see a large change in the new location of our vertex in the upsampled version, whereas in non-sharp corners and edges our change is not going to be as drastic. In either case our figure does get smaller but that change slows down at larger iterations of upsampling. One reason why we have this disproportionate figure is because the vertices are unevenly distributed. If we were to introduce symmetry on the locations and spacing of the vertex in our figure through splits, we can make our upsampling effect be the same throughout the geometry of our figure, curtailing the asymmetry issue. I show this in the example with fixing the cube.
+	</p>
+		
+<div class='im-container'>
                 <div>
-                <div class="label"> Level 0, Point NN </div>
-                <img class="image-container" src="lzpn.png" alt="lzpn">
+                <div class="label"> Level 0, Original Cube </div>
+                <img class="image-container" src="lvl0.png" alt="lvl0">
                 </div>
                 <div>  
-                <div class="label"> Level 0, Point Bilinear </div>    
-                <img class="image-container" src="lzpl.png" alt="lzpl">
+                <div class="label"> Level 1 Upscaling </div>    
+                <img class="image-container" src="lvl1.png" alt="lzpl">
                 </div>
                 <div>
-                <div class="label"> Level Nearest, Point NN </div>
-                <img class="image-container" src="lnpn.png" alt="lnpn">
+                <div class="label"> Level 2 Upscaling </div>
+                <img class="image-container" src="lvl2.png" alt="lnpn">
                 </div>
                  <div>
-                 <div class="label"> Level Nearest, Point Bilinear </div>
-                <img class="image-container" src="lnpl.png" alt="lnpl">
+                 <div class="label"> Level 3 Upscaling </div>
+                <img class="image-container" src="lvl3.png" alt="lnpl">
+                </div>
+		<div>
+                 <div class="label"> Level 4 Upscaling </div>
+                <img class="image-container" src="lvl4.png" alt="lnpl">
                 </div>
         </div>
-        <p class="caption">Comparing various level and point sampling combinations. Having a high complexity of both seems to smooth out edges the best, leading to higher anti-aliasing power.
+        <p class="caption">Comparing the various levels of upscaling it is clear that sharp corners have a much larger inward movement effect compared to non sharp ones when we upscale. Due to this disproportionate movement, we see the eventual asymmetry. 
 </p>
             
         </section>
