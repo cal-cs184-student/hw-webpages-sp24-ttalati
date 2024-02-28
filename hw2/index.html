@@ -157,33 +157,30 @@ Edge-split was the other half-edge manipulation that we had to implement. Arguab
 	    </p>
             <img class="image" src="teapot.png" alt="teapot">
  <p class="caption">The evaluated bezier surface which generates this teapot.
-</p>
-
-            <h4>Extra Credit</h4>
-            <p>The alternative sampling method I implemented was jittered sampling. Essentially jittered sampling is the idea that instead of sampling at deterministic points for our supersampling, we sample uniformly within the sub pixels that are of super sampling. Otherwise, the rest of the supersampling machinery is the same. At lower super sampling rates we do see more jaggedness and the jaggedness is quite random. But at higher super-sampling rates the jittered sampling method does really help reduce aliasing. However the biggest issue with this sampling method is if the border of a triangle goes through the center of the triangle, we see random white spots since there is a good chance that none of the sampled pixels land inside the triangle or ½ land inside and ½ outside leading to a discoloration. Other than that whenever we have sharp frequency changes it seems that with lesser super samples, we are able to better anti-alias it with jittered sampling.
-</p>     
-            <div class='im-container'>
-                <div>
-                <div class="label"> Jitter Sampling rate = 1 </div>
-                <img class="image-container" src="jitter1.png" alt="task2_1">
-                </div>
-                <div>  
-                <div class="label"> Jitter Sampling rate = 9 </div>    
-                <img class="image-container" src="jitter9.png" alt="task2_4">
-                </div>
-            </div>
-
-            <p class="caption">Notice how the jitter sampling tends to perform much worse at lower sampling rates but also does a good job of capturing high frequencies that a deterministic sampling method would not. It also takes less of a super sampling frequency to get the same performance as a deterministic sampling method (9 vs 16 we saw earlier)</p>
-            
+ </p>       
         </section>
 
         <section>
-            <h3>Task 3: Area-Weighted Vertex Normals Surfaces with S</h3>
-<p> To implement area-weighted vertex normals, we want to traverse the geometry until we come back to our starting half edge pointer. Throughout our iteration, we check the face associated with our starting half edge pointer and ensure that it is not a boundary. From the current edge, we calculate the vertex it’s on and the next two vertices in its path. This gives us 3 points in a triangle. By calculating the cross product of the line vectors between them, we can calculate the triangle face area by normalizing the stated cross product and dividing by 2. The formula behind this is basic geometry. Then we keep track of a variable that contains the weighted sum of face normals, calculated by taking the product of the calculated area and the normal of the face of the current pointer. Finally at the end, we normalize the final weighted sum.
+            <h3>Part 3: Area-Weighted Vertex Normals </h3>
+<p> The main challenge with implementing the assignment of vertex normals to be the area-weighted normal vector of all the vertex’s neighboring faces was getting used to the half-edge data structure and coming up with a way to traverse and change pointers in a manner that would lead us to iterating over all of the neighboring faces of a particular vertex. The pattern of traversal that was deduced was start at the current half-edge of the instance vertex that is calling the function. Each half edge is associated with a face so we can query for that. If the face is a boundary face then it is a “virtual face” and we should not have that in our area calculations. If not, we need to update our running weighted sum. We describe the methodology to calculate the weights in a bit. After the weight calculation and sum update is done, pointers are changed in the following manner: we access the twin halfedge (so the halfedge that points into our vertex) and then access the next half edge of the twin in this way in our next iteration inside our loop logic, the face will be the neighboring face and our logic can continue. Due to the structure of the manifolds we are guaranteed to return back to our starting halfedge, which is our ending point of the loop. Once the loop ends, we simply return a normalized version of our running weighted normal vector sum, giving the weighted-normal of the target vertex.
 </p>
-            <img class="image" src="task3.PNG" alt="Test3 Teapot Shading w/o vertex normals">
-            <img class="image" src="task31.PNG" alt="Test3 Teapot Shading w/ vertex normals">
+		<p>Now we describe how to find the weight (which is the area of the triangular face). We know through vector algebra the norm of the cross product of two vectors gives the area of the parallelogram that is formed by those two vectors. Halving that value gives the area of the triangle specified by the two vectors (since two vectors and an angle can form a triangle [recall side angle side congruence]). To find these vectors we need 3 points, one being the vertex and the other 2 being the neighboring ones to form the vector-ray. These neighbors can be found by accessing the current half-edge’s next half-edge and querying for the vertex that it roots and also the current half-edge’s next-next vertex. With these 3 points, we just find the vector from vertex -> point 1 and vertex -> point 2, find the norm of the cross product and divide by 2 to get the area. Then we query for the actual norm of the face by simply using the member function of the Face class and multiply it by the calculated average and add it to our running sum. The final sum clearly is the weighted sum of all the neighboring face-norms, which can be used to find the final answer as indicated in the previous paragraph.
+		</p>
 
+	<div class='im-container'>
+                <div>
+                <div class="label"> Flat Shading </div>
+                <img class="image-container" src="flatshading.png" alt="flatshading">
+                </div>
+                <div>  
+                <div class="label"> Phong Shading </div>    
+                <img class="image-container" src="phongshading" alt="phongshading">
+                </div>
+		<div>  
+            </div>
+	<p class="caption">Comparison of two different shading mechanisms used to compute shading on the teapot. Phong Shading, which makes use of vertex normals, which we built the machinery to calculate in this part results in a much more smooth surface visual.
+</p>
+		
             <h4>Extra Credit</h4>
             <p>For the GUI I decided to add a feature that could rotate the viewport. Pressing the button R would rotate one degree clockwise whereas press T would rotate it one degree counterclockwise. The way I implemented this was first by adding a listener to the T and R keys in the keyboard_event function. This would change a new variable I made for the class called degree_rot by one degree in the respective direction. Then I also changed the redraw method to left-multiply the ndc_to_screen matrix with the rotation degree that takes the parameter of degree_rot. This would achieve the rotation if I called redraw every time the key_listen event was triggered.</p>
 
