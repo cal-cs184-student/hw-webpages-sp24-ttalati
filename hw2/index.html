@@ -229,23 +229,19 @@ One thing that helped make this process much smoother was actually giving nice n
 </p>
             <div class='im-container'>
                 <div>
-                <div class="label"> NN Interpolation, Sampling Rate = 1 </div>
-                <img class="image-container" src="nearest_1.png" alt="nearest_1">
+                <div class="label">Teapot Before Splits </div>
+                <img class="image-container" src="tp.png" alt="tp">
                 </div>
                 <div>  
-                <div class="label"> Bilinear Interpolation, Sampling Rate = 16 </div>    
-                <img class="image-container" src="bilinear_1.png" alt="bilinear_1">
+                <div class="label"> Teapot After One Split </div>    
+                <img class="image-container" src="tpflip.png" alt="tpflip">
                 </div>
                 <div>
-                <div class="label"> NN Interpolation, Sampling Rate = 16 </div>
-                <img class="image-container" src="nearest_16.png" alt="nearest_16">
-                </div>
-                <div>
-                <div class="label"> Bilinear Interpolation, Sampling Rate = 16 </div>
-                <img class="image-container" src="bilinear_16.png" alt="bilinear_16">
+                <div class="label"> Teapot After Many Splits </div>
+                <img class="image-container" src="tpflips.png" alt="tpflips">
                 </div>
             </div>
-            <p class="caption">Comparing bilinear vs nearest neighbor pixel sampling on various sampling rates.
+            <p class="caption">Showing the edge-flip functionality. Note how the last image has multiple splits within one triangle as well.
 </p>
            <p> Examining the photos it is pretty clear that bilinear interpolation does a better job at antialiasing compared to nearest neighbor interpolation when the sampling rate is the same. There is also more anti-aliasing when the sampling rate is higher (which is expected behavior since we increase our sampling rate) so the discrepancy between bilinear and nearest neighbor at higher sampling rate is lesser. The reason bilinear does a better job is because in bilinear we sample the closest 4 texel colors to assign the color of the pixel compared to just sampling one, which is inherently a higher sampling rate, leading to more anti-aliasing. Extending from that observation, we will notice larger differences between the two sampling methods when the frequency in the texture space is very high so when the signal changes quickly our sampled output will be less jagged than if we used nearest neighbor as there are more samples we are taking into account to determine the color at out pixel. </p>
             
