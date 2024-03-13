@@ -112,43 +112,40 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
             <h3>Part 1: Ray Generation and Scene Intersection</h3>
             
             
-            <p>Basically De Casteljau’s algorithm is a recursive subdivision algorithm that given a list of n control points and a parameter ‘t,’ basically indicates the location along the eventual Bezier Curve we are evaluating by producing n - 1 of the next control points in one step. Recursively applying this step as indicated in the algorithm until we have just 1 point essentially gives us the point that is actually located on the Bezier Curve that we are trying to graph for the specific parameter ‘t.’ To produce n - 1 control points from n control points, we basically linearly interpolate between each two consecutive control points, with ‘t’ acting like our interpolation parameter.             
+            <p>The entire pipeline of ray generation is that we trace out rays from the camera’s perspective of the image that is being captured onto the world. The points at which we intersect in the world (with the first intersection on the ray being the only one that counts since the image will be 2 dimensional) will have some radiant energy. We want to capture the radiance along the camera ray that went to the scene to get a better picture of the lighting in the environment, allowing us to have a better rendering and rasterization of the scene. Now that we understand the motivation behind ray-tracing; it gives a more physically accurate model of lighting that can be implemented to render more realistic images, we need the functionality to actually generate rays from the camera space out to the world. To make calculations easier, the image of interest is transformed into camera space from normalized image space, from which we then cast out a ray to a particular pixel. This ray is then converted into world space to make the coordinates consistent with the rest of the calculations that occur later. The equations for the conversion from normalized image to camera were laid out in the spec.             
             </p>
+
+		<p>One thing to note is that the boundary of a pixel is the range of coordinates from (x, y) to (x+1, y+1). This was the case in simple rasterization as well, so the idea is we want to cast multiple rays out uniformly in that region to get a better understanding of the radiance we want to rasterize our pixel with. These two things were implemented in the first two parts of the task.
+
+        
+            </p>
+
+		<p>Next we actually dealt with implementing intersection tests with primitives. Particularly, the two primitives that we made intersection tests for were the sphere and triangle. The usage of these tests are wide: when we cast rays we want to understand the objects they intersect with in the world, which will allow us to then query for its light emittance and reflectance properties, depending on the ray that is being cast. These queries help us up the pipeline to actually determine the rasterized light intensity.           
+            </p>
+
+		<p>In implementing ray-triangle intersection, I utilized the Möller–Trumbore formula presented in lecture. Essentially this equation presents a closed form solution that given the ray (parametrized by the starting point and the vector direction it is growing in [note that all of this is now done in world space, which we convert into using the transformation matrices provided]) and the three vertices of the triangle, it return a matrix-vector relationship that returns a vector [t, beta, gamma], where beta and gamma are the barycentric coordinates of the intersection point of the ray on (right now) the plane that the three points lie on and t represents the value of t where the intersection lies in. As one can imagine, this equation will always give us a vector, but we must sanitize the vector to make sure that the intersection actually exists inside the triangle and inside the domain of ray values that we consider valid. To see if the intersection is inside the triangle, we simply use the property of barycentric coordinates, specifically if alpha (1 - beta - gamma), beta, and gamma are all between 0 and 1 and sum to 1 that means the intersection is inside the triangle. Secondly, if t is between the min_t and max_t parameters this is a valid intersection as well. We now also update max_t to be the t value of this intersection since we do not want objects behind the first object to count as intersection because in reality they are blocked (at least when the object is opaque). 
+</p>
+
+		<p>Ray-sphere intersection was structurally similar, but the intersection point formula was a bit different. Specifically we know that a sphere is defined by (p - c) - r^2 = 0. Where p are the set of points on the boundary of the sphere, c is the center, and r is the radius. To test where the ray intersections with the sphere we simply plug in p_r + d * t (the equation of our ray) into p and solve for t, the only constant remaining. As shown in the lecture slides, when expanding the equation once we have plugged in the equation for our ray, we get a quadratic equation, of which we need to find the roots. This can be then done using the quadratic formula, which utilizes the coefficients of the quadratic equation. At the end of this process, we have a (or multiple or none) value for t. We then again test the potential values, keeping only the minimum value for t that also satisfies the constraint of being within min_t and max_t. And like previously, we update max_t to be the new t value, if a satisfying one was found.
+</p>
 
 	    <div class='im-container'>
                 <div>
-                <div class="label"> Iteration: 0 </div>
-                <img class="image-container" src="iter0.png" alt="iter0">
+                <div class="label"> CBspheres </div>
+                <img class="image-container" src="CBspheres.png" alt="iter0">
                 </div>
                 <div>  
-                <div class="label"> Iteration: 1 </div>    
-                <img class="image-container" src="iter1.png" alt="iter1">
+                <div class="label"> CBempty </div>    
+                <img class="image-container" src="CBempty.png" alt="iter1">
                 </div>
 		<div>  
-                <div class="label"> Iteration: 2 </div>    
-                <img class="image-container" src="iter2.png" alt="iter2">
-                </div>
-		<div>  
-                <div class="label"> Iteration: 3 </div>    
-                <img class="image-container" src="iter3.png" alt="iter3">
-                </div>
-		<div>
-                <div class="label"> Iteration: 4 </div>    
-                <img class="image-container" src="iter5.png" alt="iter5">
-                </div>
-		<div>  
-                <div class="label"> Iteration: 5 </div>    
-                <img class="image-container" src="iter6.png" alt="iter6">
+                <div class="label"> CBcoil </div>    
+                <img class="image-container" src="blob.png" alt="iter2">
                 </div>
             </div>
 
-	<p class="caption">Showing the evaluation of the bezier curve at each recursive subdivision step. Iteration 5 evaluates the exact point on the curve.
+	<p class="caption">Showing some normal shading renders of scenes. This showcases a working intersection test and ray generation.
 </p>
-
-	<img class="image" src="alt_bez.png" alt="alternative bez">
- <p class="caption">The evaluated bezier curve as well as the point of a curve parametrized by slightly different positioned control points as well as a different value of t.
-</p>
-
 		
         </section>
         
