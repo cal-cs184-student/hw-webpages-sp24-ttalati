@@ -153,9 +153,70 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
             <h3>Part 2: Bounding Volume Hierarchy </h3>
             <p> As noted in the overview, naively when testing whether or not a ray intersects a particular primitive, all the primitives are looped through and then we check for intersection on each one. This is linear in the order of the number of primitives, which could be pretty slow. This is where the BVH comes into play, a tree structure that helps cut the intersection test time to a logarithmic order, much more amenable to scaling. 
 	    </p>
-            <img class="image" src="teapot.png" alt="teapot">
- <p class="caption">The evaluated bezier surface which generates this teapot.
- </p>       
+
+		<p>Constructing the BVH followed this process: namely the actual iterators for the primitives only exist at the leaf nodes. A node of the tree would become a leaf if the number of ongoing primitives were less than or equal to the maximum leaf size. This would basically function as our stopping point for recursion (or iteration as implemented in the extra credit) for creating new nodes in our BVH. The bulk of the logic is as follows for deciding the set of primitives that would belong to the right and left BVH nodes respectively. Basically given the root BVH node with a start and end iterator representing all the primitives that its bounding box covers, our job is to split it into two separate bounding boxes of primitives. Note that unlike KD-trees the bounding boxes are not disjoint but rather the primitives that are split are disjoint in a BVH. The splitting is determined by a heuristic. Initially just to check the functionality of the BVH I just split on the mean centroid of the x-axis but later I implemented a better heuristic. The heuristic that was used is as follows: we check all the three axis (x, y, z) and our candidate split point for each of the axis is the mean centroid location (so the mean of all the centroid locations for all the primitives along the axis of interest). On each of these candidates, I would check the surface area heuristic score. As introduced in lecture, essentially the score tries to minimize the chance of needless intersection tests. A heuristic for that determination is simply calculating the surface area of the bounding boxes of each split and multiplying it by the number of primitives in the split. The idea being that the number of intersection tests is proportional to the surface area of our split so minimizing it will reduce the intersections in the long run since the surface area encodes the probability of a ray hitting a bounding box node. Out of all the three axis, I kept the best (lowest) scoring split.  Once the split was determined, the goal was to actually add new child nodes and connect pointers to the parent. The parent node is confirmed not to be a leaf so it can now hold the pointers to the two new child pointers we create. Now the child nodes need an updated view of the iterators. These iterators were determined by editing the pointers that our iterators pointed to using a for loop that went through the new split primitives in order. This took a lot of time since initially just had one stack and set the iterators in the nodes but because the variables were declared as constants it would not allow me. I had to then use a 3-stack method (for the extra credit). Now that we have updated pointers and field variables, we can rely on the recursive base case to stop further iterating, once we have few primitives or no more actual splits (this was determined by checking if the array size of either the left or right split was zero, implying that we did not actually split [not possible with the heuristics we used]).	
+		</p>
+
+		<p>
+		Once the BVH construction is complete, whenever we have an intersection task, the data structure is used as a way to get fast, logarithmic search. Namely two methods intersect and has_intersect were constructed. has_intersect just concerns with if there is an intersection not where it is so one can imagine the logic is the same as intersect except we can return early since we are not worried about finding the first intersection, rather just knowing if there is an intersection or not. Therefore, I will talk about the intersect method. Here we first check if the ray even intersects the root node, if not we know it cannot intersect any of the children either so it allows us to not do any redundant intersection tests. If we do have a bounded box intersection, we simply check if the node is a child, because if it is then we check the intersections on the primitives, which was implemented in the previous part and we will get the first primitive that intersected. If not we run this recursive intersection method on the two children, and the recursive step will guarantee us knowing whether or not an intersection has occurred and if it has the intersection structure will have the right populated fields. 	
+		</p>
+
+		<p>Here are large dae files that would take a painfully long time to render with no acceleration. With acceleration all of them took easily less than .1 seconds, showcasing the massive speedup.
+		</p>
+       
+		<div class='im-container'>
+                <div>
+                <div class="label"> Dragon </div>
+                <img class="image-container" src="dragon.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label"> Max Planck </div>    
+                <img class="image-container" src="max.png" alt="iter1">
+                </div>
+		<div>  
+                <div class="label"> Lucy </div>    
+                <img class="image-container" src="lucy.png" alt="iter2">
+                </div>
+		<div class="label"> Wall-E </div>    
+                <img class="image-container" src="empty.png" alt="iter2">
+                </div>
+            </div> 
+
+	<p class="caption">All of these files are quite large so trying to render them without a BVH would take a lot longer.
+</p>
+
+	<p class="left">
+		In this section I give some of the runtimes of attempting to render without BVH and with BVH, showcasing the large speedup the data structure brings. 
+	</p>
+
+	<table>
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Non-BVH (seconds)</th>
+			<th>BVH (seconds)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>cow.dae</td>
+                        <td>3.223</td>
+			<td>0.053</td>
+                    </tr>
+                    <tr>
+                        <td>maxplanck.dae</td>
+                        <td>36.4196</td>
+			<td>0.071</td>
+                    </tr>
+		  <tr>
+                        <td>dragon.dae</td>
+                        <td>87.016</td>
+			<td>0.088</td>
+                    </tr>
+                </tbody>
+            </table>
+<p>It is pretty clear that having the BVH structure makes a large difference. The magnitude is 100x better even for smaller renders and obviously the speedup differential will continue to increase as the renders get larger and larger as the underlying difference between log x vs x in growth will only continue to increase. This large gain in speedup is massive because it allows us to do more intensive and more intersection tests in general and is one reason that the render times for having multiple samples and also multiple light samples for each pixel sample and then also adding the fact that we will have more bounces instead of just direct lighting is even possible, otherwise if our intersection tests were too slow, at each step we are adding this multiplicative factor of iterations and all of them depend on a fast intersection resolution protocol.</p>
+	
         </section>
 
         <section>
@@ -178,7 +239,10 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
             </div>
 	<p class="caption">Comparison of two different shading mechanisms used to compute shading on the teapot. Flat shading makes use of face normals. Phong Shading, which makes use of vertex normals, which we built the machinery to calculate in this part, results in a much more smooth surface visual.
 </p>
-            
+
+		
+
+		
         </section>
 
         <section>
