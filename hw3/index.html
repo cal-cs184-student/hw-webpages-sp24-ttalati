@@ -503,169 +503,52 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
         </section>
 
         <section>
-             <h3>Part 5: Edge Split</h3>
-            <p> In a nutshell, in the edge split operation, we attach a new vertex at the midpoint of the edge we are trying to split and then create an edge in the same direction as if we were trying to flip the selected edge. Now the original two triangles have been partitioned into four separate triangles. This means there are 2 new faces (since we have two new triangles), one new vertex (the midpoint), three new edges (across the midpoint), and also six new half-edges. Other than that the rest of the challenge is just reassigning pointers in the old structures to either the new structures that are created through the split or to a new location as a result of the split. Therefore, the edge split follows much of the same basic steps as the flip except we are also adding new structures. Specifically, to tackle the split, like with the flip we first initialized variables for all the structures involved  (vertices a, b, c, d; half-edges ac, cd, db, ba, cb, bc; edges ac, cd, db, ba; faces 1 and 2). Then initialize the new structures that will be introduced post flip (vertex m; faces 3, 4; 6 new half-edges, 3 new edges). Once all of these structures were initialized, the task becomes the same as in the flip-case: correctly populate the field variables of the structures. The most complicated assignments are for the half-edges, but working through a drawn diagram can allow us to systematically label the next half-edge, face, vertex, and twin pointers. Then we simply need to make sure that each of the face, vertex, and edge structures have a correct pointer to the right half-edge. Candidly, there is no real smart algorithm, these pointer adjustments just have to be carefully assigned by just assigning as the drawing of the post-split state indicates. 
+             <h3>Part 5: Adaptive Sampling</h3>
+            <p> The idea behind adaptive sampling is that we can reduce the noise in our rendered images by only stopping sampling once we are confident about the light estimate at the point. Specifically we implement a 95% confidence interval. In implementing this most of the work is in the outermost function: raytrace_pixel. Here is where we take different ray samples to estimate lighting. Basically the idea is as we are taking these ray samples of lighting we accumulate the mean lighting and the standard deviation of the lighting samples. If the mean * 1.96 *(standard deviation of lighting estimate) / sqrt (number of running samples) represents only a 5% of a deviation from our running estimate mean, then we can claim confident convergence of our mean value and assign that to the pixel’s radiance value. One may notice that having to update the current mean and standard deviation of the average is quite an expensive task if done with every ray sample. To mitigate most probably redundant computation, we define a batch size after which we recalculate the estimates and determine convergence. When the batch size is not met we simply keep a streaming count of the current sum of the light samples and the sum of the samples squared because both of these terms help us calculate the end statistics that will lead to convergence. One can also imagine pathological instances where convergence is very tough especially at high frequency locations. In this case we will resort to an absolute maximum number of samples as being the worst-case endpoint for our lighting estimate. Usually this number is quite large since the chance of reaching it is low as convergence will usually be achieved before. 
 </p>
 <p>
-One thing that helped make this process much smoother was actually giving nice names to the structures instead of the rather unreadable and uninterpretable names we gave them when doing the flip operation implementation. Specifically I labeled the vertices a, b, c, d and edges similarly instead of just using numbers. This way I had a much easier time translating the drawn image state into the actual code that implements that logic. 
+Attached below are two scenes rendered with adaptive sampling with a maximum sample size of 2048.
 </p>
             <div class='im-container'>
                 <div>
-                <div class="label">Teapot Before Splits </div>
-                <img class="image-container" src="tp.png" alt="tp">
+                <div class="label">Bunny Image </div>
+                <img class="image-container" src="adapt_bunny.png" alt="tp">
                 </div>
                 <div>  
-                <div class="label"> Teapot After One Split </div>    
-                <img class="image-container" src="tpflip.png" alt="tpflip">
+                <div class="label"> Bunny Sampling Rate Image</div>    
+                <img class="image-container" src="adapt_bunny_rate.png" alt="tpflip">
                 </div>
                 <div>
-                <div class="label"> Teapot After Many Splits </div>
-                <img class="image-container" src="tpflips.png" alt="tpflips">
+                <div class="label"> Spheres Image </div>
+                <img class="image-container" src="adapt_balls.png" alt="tpflips">
+                </div>
+		    <div>
+                <div class="label"> Spheres Sampling Rate Image </div>
+                <img class="image-container" src="adapt_balls_rate.png" alt="tpflips">
                 </div>
             </div>
-            <p class="caption">Showing the edge-flip functionality. Note how the last image has multiple splits within one triangle as well.
-</p>
-           <div class='im-container'>
-                <div>
-                <div class="label">Teapot Before changes </div>
-                <img class="image-container" src="first.png" alt="first">
-                </div>
-                <div>  
-                <div class="label"> Teapot After Applying Initial Splits </div>    
-                <img class="image-container" src="second.png" alt="second">
-                </div>
-                <div>
-                <div class="label"> Teapot After Applying Flips to Splits </div>
-                <img class="image-container" src="third.png" alt="third">
-                </div>
-		<div>
-                <div class="label"> Teapot After Applying Splits to Flips of Splits </div>
-                <img class="image-container" src="last.png" alt="last">
-                </div>
-            </div>
-            <p class="caption">This sequence of photos shows the use of a  functional half-edge split with a functional half-edge flip to create complex transformations.
+            <p class="caption">Showing the rendered scenes using adaptive sampling and the associated sample rates. Notice how high frequency areas tend to have higher sampling rates. These images were rendered using depth of 5 and 1 sample per light.
 </p>
 
-		<p>Initially while trying to implement half-edge splitting I had quite unreadable variable names, which did not help in making my job of deciding where pointers lie easier. After trying to get this version working, I decided to give the variables more descriptive names (corresponding with the actual labels I had on my paper diagram). This made it much faster and easier to implement the splitting function. 
-</p>
-  <img class="image" src="edgesplitdebug.jpeg" alt="edgesplitdebug">
-		<p class="caption">Note how again the drawing is not too involved but goes a long way in making programming easier.
-</p>
-            <h4 class="left">Extra Credit: Boundary Edge Split</h4>
-<p class="left"> I implemented the edge-split functionality on boundary edges. Below are the photos of it working</p>
-	<div class='im-container'>
-                <div>
-                <div class="label"> Beetle Car Before </div>
-                <img class="image-container" src="carbefore.png" alt="before">
-                </div>
-                <div>  
-                <div class="label"> Applying Boundary Edge Splits with Other Edge Splits </div>    
-                <img class="image-container" src="carafter.png" alt="after1">
-                </div>
-		<div>  
-		<div>  
-                <div class="label"> Applying Multiple Boundary Edge Splits </div>    
-                <img class="image-container" src="multiple.png" alt="after2">
-                </div>
-		<div> 
-            </div>
-	<p class="caption">Pictures showing the functional boundary edge-flip mechanism.</p>
-	<p class="left">The implementation was not too bad as I had a lot of pointer manipulation practice from the regular edge-split and edge-flip implementation. The subtly to note is that only one new triangle inside is created and there is one new half-edge that exists on the boundary. After noting those, the steps that proceed are the same as just carefully reassigning pointers in any other case.</p>
+		
         </section>
 
         <section>
-             <h3>Part 6: Loop Subdivision for Mesh Upsampling</h3>
+             <h3>Part 6: Extra Credit</h3>
+		<p>For extra credit I implemented two different changes, both to the BVH to make it run faster.</p>
+		<h4>Extra Credit 1: Non-Recursive BVH</h4>
 
         <p>
-	Basically loop subdivision is a method to upsample our given mesh and as mentioned in the overview, relies heavily on our edge-split and flip functionality we worked on. The mechanics of the algorithm to implement mesh upsampling were pretty finely detailed in the spec so it was just a matter of correctly translating those steps into code. Specifically the complexity of trying to upsample lies in two factors: introducing new structures as well as changing the positions of our old structures. However, some of the properties of the new structures depend on the positions and properties of the old ones, which made it important to be careful in the order that changes were made. Specifically, each of the structures had a field that stored the old and new positions as well as a boolean flag which labeled whether or not the structure itself was new or not. Then we computed the new positions of the old vertex (storing into the old vertices’ field) as well as the position of new vertices (which would go inside the edge that would be split to achieve that new vertex). Both the position of the new position of the old vertex and the position of the new vertex were calculated according to the loop division formula that was given. While the subdivision and the edge split and flip of the triangle were described earlier it is easier to calculate out all the positions and then deal with the geometric flipping and splitting that would place the right structures at the right location.	
+	The first optimization I did was to implement the BVH using an iterative approach instead of a recursive one. In order to do this, I used a stack and a while loop. Once the stack was empty, I would know that I had finished making the new nodes and the entire BVH structure was ready. When I needed to make new children nodes (when one of the stopping points had not been met yet like too many primitives existing in the bounding box) I would create the two children nodes and then push them to the stack. This is the same thing as creating two children nodes and recursing on them in DFS order but we save the need to create a new function call and instead can do everything inside the original function. One thing that was particularly tough (maybe this would be obvious for someone more adept with C++) was the fact that the fields in the BVH node structure were defined to be constants and initially I was also placing the updated iterators there but that would not work since one can imagine you need to reupdate the iterators as you make downstream edits. I got around this by adding two extra stacks that held the start and end iterators for each of the on-going nodes. I am still not sure if this is the best way to get around the constants but I can imagine right now it is one place that can be updated to make this even faster.
 	</p>
-
-		<p>Next we would split every edge and once we split the edge, utilizing the edge split subroutine. While doing this we propagate over the position of the new vertex from the value that was stored inside the edge structure previously. One thing that we had to be careful about was not splitting newly created edges, but that could be determined easily (if either of the vertices that make up the edge were newly created then the edge is new and we ignore it). 
+		<p>When noticing the difference between recursive implementation and an iterative on, there was a clear around 18% boost in timing performance, with the rate being more accurate for larger renders. </p>
+<h4>Extra Credit 2: Surface Area Heuristic for BVH Node Split</h4>
+		<p>The second extra credit item I worked on was applying a different heuristic to the split the primitives into two separate nodes. Specifically, I implemented the surface area based split that was introduced in lecture. Specifically we hypothesize that the hit rate of a node is the proportional to the ratio of the surface area of the outer bounding box to the inner bounding box and hence we want to minimize the hit rate to minimize expected hits and the expected time on intersection. Implementing the surface area heuristic was simple, I just needed to add code that added this score and then I compared the split across 3 different axis, x, y, z. I only split on the mean centroid but one could imagine extending this out to also check each partition between the primitives and seeing if the split was better. But given the meshes we were dealing with, I did not think it would make too much of a difference on the end result given the amount of overhead in preprocessing that split. But the surface area split showed significant improvements over the other split I was previously using. Specifically, having a nicely configured split was showcasing around a drop of 40% in the amount of intersection tests per ray (from around 7 on average to 4). This is significant as that has a huge repercussions in reducing the run times of our tracing times.
 		</p>
 
-	<p>
-	After edge splitting was done, we then flipped edges that connected one new vertex with another old one (also done through using a simple xor on the vertex-is-new flags). And once we determined that an edge needed to be flipped we simply called the flipEdge function we created earlier. Another subtlety here is we had to make sure to only flip new edges since old edges should not be flipped no matter the state of the vertex, which could also be determined by a simple conditional statement on the flags.	
-	</p>
-
-	<p>
-	Finally we have the mesh ready and just need to make the actual position field for all the vertices the one that is stored in their corresponding newPosition field, completing our upsampling. 	
-	</p>
-
-	<p>
-	When looking at the behavior of sharp corners and edges under loop subdivision, it is evident these sharp parts of the geometry have a much harsher/larger change at each level of upsample than non sharp corners and edges. Specifically compared to the original geometry, the upsampled version pulls in these corners and edges much more in an effort to make the overall geometry more rounded. Since sharp corners and edges see a much larger inward pull effect than non sharp ones, we disproportionately change the geometry or shrink the sharper areas compared to the non-sharper ones, leading to asymmetry. This also makes sense as in sharper corners, the locations of the other vertices in comparison to ours are much more different, so when we apply the weighted averaging step, we are going to see a large change in the new location of our vertex in the upsampled version, whereas in non-sharp corners and edges our change is not going to be as drastic. In either case our figure does get smaller but that change slows down at larger iterations of upsampling. One reason why we have this disproportionate figure is because the vertices are unevenly distributed. If we were to introduce symmetry on the locations and spacing of the vertex in our figure through splits, we can make our upsampling effect be the same throughout the geometry of our figure, curtailing the asymmetry issue. I show this in the example with fixing the cube.
-	</p>
 		
-<div class='im-container'>
-                <div>
-                <div class="label"> Level 0 Original Cube </div>
-                <img class="image-container" src="lvl0.png" alt="lvl0">
-                </div>
-                <div>  
-                <div class="label"> Level 1 Upscaling </div>    
-                <img class="image-container" src="lvl1.png" alt="lzpl">
-                </div>
-                <div>
-                <div class="label"> Level 2 Upscaling </div>
-                <img class="image-container" src="lvl2.png" alt="lnpn">
-                </div>
-                 <div>
-                 <div class="label"> Level 3 Upscaling </div>
-                <img class="image-container" src="lvl3.png" alt="lnpl">
-                </div>
-		<div>
-                 <div class="label"> Level 4 Upscaling </div>
-                <img class="image-container" src="lvl4.png" alt="lnpl">
-                </div>
-        </div>
-        <p class="caption">Comparing the various levels of upscaling it is clear that sharp corners have a much larger inward movement effect compared to non sharp ones when we upscale. Due to this disproportionate movement, we see the eventual asymmetry. 
-</p>
-
-		<p>One thing I did to make the cube divide more symmetrically is make each of the faces the sample geometrically by splitting an edge on every face. This way the sharpness of the corners decreases as neighboring vertices are closer to each other and two all vertices will have similar neighbor topologies. One can imagine that increasing the number of triangles that make up our cube symmetrically will do an even better job at maintaining symmetry through various upsampling levels.
-</p>
-		<div class='im-container'>
-                <div>
-                <div class="label"> Level 0 Modified Cube </div>
-                <img class="image-container" src="c0.png" alt="lvl0">
-                </div>
-                <div>  
-                <div class="label"> Level 1 Upscaling </div>    
-                <img class="image-container" src="c1.png" alt="lzpl">
-                </div>
-                <div>
-                <div class="label"> Level 2 Upscaling </div>
-                <img class="image-container" src="c2.png" alt="lnpn">
-                </div>
-                 <div>
-                 <div class="label"> Level 3 Upscaling </div>
-                <img class="image-container" src="c3.png" alt="lnpl">
-                </div>
-		<div>
-                 <div class="label"> Level 4 Upscaling </div>
-                <img class="image-container" src="c4.png" alt="lnpl">
-                </div>
-        </div>
-		 <p class="caption">Notice how my changes helped improve upscale symmetry.
-</p>
-		<h4 class="left">Extra Credit: Support meshes with boundary</h4>
-		<p class="left">In implementing supporting upscaling on the boundary at the boundary, I first looked up the rules for assigning new vertex (on the edge structure) and old vertex positions (on the vertex structure itself). This was found in the lecture slides on the lecture for Mesh Processing. Specifically the new position for old vertices corresponds to ⅛ * (sum of adjacent boundary vertex on boundary edges) + ¾ * (current vertex position). Similarly the update rule for a new vertex position is quite simple ½ * (sum of vertex positions that make up the edge). Once I knew these rules, much of the skeleton to add them in our upscale method already existed. Specifically I only had to add conditionals in the existing for loops that calculated new positions for old vertices and also the new positions on edges so they can be set on new vertices. The conditional corresponds to whether or not the edge or vertex I am dealing with is a boundary edge. If it was then we apply our new special logic. The application of the logic was quite straightforward as we just did simple pointer traversal and summing like previously implemented. With these changes, support for boundary upscaling was implemented. 
-</p>
-			<div class='im-container'>
-                <div>
-                <div class="label"> Level 0 Beetle Car </div>
-                <img class="image-container" src="normalbeetle.png" alt="lvl0">
-                </div>
-                <div>  
-                <div class="label"> Level 1 Upscaling on Boundary </div>    
-                <img class="image-container" src="lvl1boundary.png" alt="boundary">
-                </div>
-                <div>
-                <div class="label"> Level 2 Upscaling on Boundary </div>
-                <img class="image-container" src="lvl2boundary.png" alt="boundary2">
-                </div>		
         </section>
-			<p class="caption">Notice how boundary meshes are also being upscaled.
-</p>
-
+			
 <!-- 
 			<table>
                 <thead>
