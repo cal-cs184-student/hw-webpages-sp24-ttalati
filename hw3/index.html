@@ -286,31 +286,38 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
         </section>
 
         <section>
-            <h3>Part 4: Edge Flip</h3>
+            <h3>Part 4: Global Illumination</h3>
 
-            <p>The spec provided some really helpful tips that made the implementation of the edge flip more painless. Specifically, stating that we should just reassign all of the pointers for all of structures involved (namely vertices, edges, half-edges, and faces) probably saved a lot of time compared to if we proceeded with the alternative option of trying to find our which structures had a change in pointers and only attempting to modify those. Similarly this advice motivated the idea of first assigning all the involved structures into a variable first and then mechanically reassigning the pointers and swapping things as deemed necessary.</p>
+<p>In this task global illumination was implemented, namely the one bounce lighting from the previous part was extended to an arbitrary amount of bounces. The direct illumination part is the same as the zero_bounce so that just gets added, but the indirect illumination can take into account light that arrives at an intersection points after up to N bounces. Some bookkeeping that needed to be done is to first update the driver function est_radiance_global_illumination to return the sum of the zeroth and the at_least_one function call instead of one. Now we edit the at_least_one function to implement the up to N bounce functionality. To do this we make use of the depth of the ray. If the depth of the ray is 1 then we simply only return the 1-bounce lighting estimate. Otherwise we have space for more bounces. In this case we want to recurse and add to our 1-bounce estimate any downstream lighting that we received (because we want to get the total, if isAccumulate is off we just return the tail call / final recursive call’s calculation of the lighting which will allow us to only showcase the lighting at the Nth layer of bounce). To recurse we sample a bouncing ray from the intersection point and similar to before we see if that ray hits any other point on the world if it does then we find the lighting reflected from it using the same recursive call to this at_least_one_function. Before doing the recursive call though, we must make sure to decrease the depth of our ray by one to make sure we have a base case. The recursive call will guarantee to return us the total light accumulated from downstream bounces. We simply add that to our direct 1-bounce estimate and that is the total light we return. Similar to before when we sample the downstream bounces, we must adjust the weights by dividing by the pdf to make sure the sample does not become biased. The accumulating light estimate uses the same formula as the previous part. As it is pretty clear, the only major edit is having a recursive function and updating the driver function to call the recursive version of the function instead of just the one_bounce version. </p>
 
-		<p>At a high level the edge flip is changing the vertices that connect a certain edge along the other two points out of the 4 points involved in the two triangles that share the edge. In terms of the actual mechanics of implementing the edge flip one important thing to notice is that no new structures are created to implement this functionality. Therefore, we just need to reassign existing ones. So once we listed out all the structures (vertices a, b, c, d; half-edges ac, cd, db, ba, cb, bc; edges ac, cd, db, ba; faces 1 and 2) on paper we drew out the post-flip state of our 2-triangle geometry and reassigned the appropriate changes. For instance the face of half-edge cd was changed to correspond to the face 1 instead of it being in face 2 as it was previously. Some other half edges also had changes to their next value, specifically the ones on the edge that was flipped. Because of these multiple changes, we just used the post-condition to completely reassign all the values of the pointers. Other structures that we had to modify were the face and vertex pointers. Here the modification was just to make sure that the half-edge they point to actually still corresponds to a half-edge that represents the face or vertex because those could be changed and we could have wrong pointers. The code provides a list of the exact changes but this was the gist of the main challenges of the problem. </p>
+<p>The last part that I had to implement in this task was having global illumination with Russian roulette. The motivation being that having some constant for the number of bounces might in itself introduce sampling bias. To mitigate that we can simply make the number of bounces also non-deterministic. In particular at every bounce (past the first) there is a small chance that we will not sample that bounce. This way we do not have a biased stopping point for light and on average if the termination probability is around 0.3 like suggested we get around 1 + 3.3 bounces.  We can also further configure the maximum depth if we do not want for some reason to go above some specified depth (similar to the configuration in the adaptive sample). Russian roulette capability was added into the existing at_least_one_bounce function by just setting a boolean flag called recur, which would be true if the coin toss was a head (or if this is our first bounce anyway which we want to take if we have set indirect illumination to on). After which the body of the function is the same as before expect we also need to divide by the pdf of the coin toss being true to not prevent bias when we are accumulating our lighting estimate. If we want an absolute maximum stopping point then we can keep the logic from before having the base-case being hit when our running depth counts that we reduce with each recursive call hits 1.</p>
+
+<p>The next set of pictures compare scenes with only direct lighting and then showing the effects of only indirect lighting.</p>
 
 	 <div class='im-container'>
                 <div>
-                <div class="label"> Teapot Before Flips </div>
-                <img class="image-container" src="before.png" alt="before">
+                <div class="label"> Direct Lighting on Bunny </div>
+                <img class="image-container" src="direct_bunny.png" alt="before">
                 </div>
                 <div>  
-                <div class="label"> Teapot After Flipping One Diagonal Edge </div>    
-                <img class="image-container" src="after1.png" alt="after1">
+                <div class="label"> Indirect Lighting on Bunny </div>    
+                <img class="image-container" src="indirect_bunny.png" alt="after1">
                 </div>
 		<div>  
 		<div>  
-                <div class="label"> Teapot After Flipping Multiple Vertical Edges </div>    
-                <img class="image-container" src="after2.png" alt="after2">
+                <div class="label"> Direct Lighting on Spheres </div>    
+                <img class="image-container" src="direct_balls.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> Indirect Lighting on Spheres </div>    
+                <img class="image-container" src="indirect_spheres.png" alt="after2">
                 </div>
 		<div> 
             </div>
-	<p class="caption">Pictures showing the functional edge-flip mechanism.</p>
+	<p class="caption">Note how in the indirect lighting the light source is completely dark, which makes sense since indirect lighting accounts for light generating from bounces on other surfaces. </p>
 
-      <p class="left">Initially while implementing this functionality, I thought for some reason I could reasonably visualize all the pointer changes mentally and proceeded to write the code. Perhaps predictably one could imagine this did not bode well. Then—like I should have done earlier—I pulled out a pencil and paper, drew up the toy example and labeled the key structures both before and after the flip. This made life much easier as the work of the before and after stage was already on paper and I just had to carefully replicate it in code now. Attached for no real purpose is the pen-paper masterpiece.</p>
+      <p class="left">Now I show the non-accumulating light at increasing depth of bounces (m) </p>
 
  <img class="image" src="edgeflipdebug.jpeg" alt="edgeflipdebug">
  <p class="caption">Although the pictures are not too detailed, having a reference to look to helps speed up programming as well as reduces the possibility of errors from my empirical evidence. 
