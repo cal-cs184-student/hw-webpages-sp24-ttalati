@@ -319,10 +319,164 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
 
       <p class="left">Now I show the non-accumulating light at increasing depth of bounces (m) </p>
 
- <img class="image" src="edgeflipdebug.jpeg" alt="edgeflipdebug">
- <p class="caption">Although the pictures are not too detailed, having a reference to look to helps speed up programming as well as reduces the possibility of errors from my empirical evidence. 
- </p>     
+	<div class='im-container'>
+                <div>
+                <div class="label"> m = 0 </div>
+                <img class="image-container" src="no_accum_0_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> m = 1 </div>    
+                <img class="image-container" src="no_accum_1_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> m = 2 </div>    
+                <img class="image-container" src="no_accum_2_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 3 </div>    
+                <img class="image-container" src="no_accum_3_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 4 </div>    
+                <img class="image-container" src="no_accum_4_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 5 </div>    
+                <img class="image-container" src="no_accum_5_bunny.png" alt="after2">
+                </div>
+		<div> 
+            </div>
 
+<p class="caption">Note how there is an apparent decrease in the amount of light affecting the global illumination from subsequent layers. </p>
+
+<p class="left">As mentioned above each subsequent layer we see a decrease in lighting indicating the fact that the effect of that layer on the global light becomes less and less at higher depth levels. We see a particularly sharp drop off between the layer 2 and layer 3, where layer 3 is much darker. This makes sense intuitively as trying to sample light that comes 3 bounces into the camera may not actually hit a light source because there is a good chance one of the rays just hits another part or hits a shadow covering. This probability becomes higher and higher at larger levels, explaining the darkness.
+</p>
+
+<p class="left">The set of pictures below show the accumulating global illumination as a function of higher depth levels.
+</p>
+
+<div class='im-container'>
+                <div>
+                <div class="label"> m = 0 </div>
+                <img class="image-container" src="accum_0_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> m = 1 </div>    
+                <img class="image-container" src="accum_1_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> m = 2 </div>    
+                <img class="image-container" src="accum_2_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 3 </div>    
+                <img class="image-container" src="accum_3_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 4 </div>    
+                <img class="image-container" src="accum_4_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 5 </div>    
+                <img class="image-container" src="accum_5_bunny.png" alt="after2">
+                </div>
+		<div> 
+            </div> 
+			<p class="caption">As with all the photos in this sections we are using 1024 samples per pixel in these renderings. </p>
+
+<p class="left">As seen in these photos if we have higher depths of global illumination our images look brighter, which makes sense because each level is adding some degree of light. However the rate of change of this brightness is also begins to fall off at higher depth levels. We could have predicted this after looking at the previous set of images that showed decreasing light at non-accumulating depth levels.
+</p>
+
+			<p class="left">Now I will show the renderings using Russian-Roulette rendering with increasing depth levels.
+</p>
+	<div class='im-container'>
+                <div>
+                <div class="label"> m = 0 </div>
+                <img class="image-container" src="russian_0_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> m = 1 </div>    
+                <img class="image-container" src="russian_1_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> m = 2 </div>    
+                <img class="image-container" src="russian_2_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 3 </div>    
+                <img class="image-container" src="russian_3_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 4 </div>    
+                <img class="image-container" src="russian_4_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 100 </div>    
+                <img class="image-container" src="russian_100_bunny.png" alt="after2">
+                </div>
+		<div> 
+            </div> 
+
+			<p class="caption">Russian Roulette rendering with increasing max_depth levels. Samples per pixel was still 1024. </p>	
+		<p class="left">We see that past around m = 3 the images start looking very similar, especially when comparing m = 4 and m = 100. This makes sense as the parameter used to render these was p = 0.35, which makes our expected bounces around 1 + 3 = 4. The one because we hard code always making one bounce and then apply Russian Roulette.
+</p>	
+
+			<p class="left"> Now I am going to compare the renderings when increasing number of pixels per sample while keeping light samples constant at 4.
+</p>	
+			<div class='im-container'>
+                <div>
+                <div class="label">  = 1 </div>
+                <img class="image-container" src="sample_1_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> m = 2 </div>    
+                <img class="image-container" src="sample_2_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> m = 4 </div>    
+                <img class="image-container" src="sample_4_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 8 </div>    
+                <img class="image-container" src="sample_8_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 16 </div>    
+                <img class="image-container" src="sample_16_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 64 </div>    
+                <img class="image-container" src="sample_64_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 1024 </div>    
+                <img class="image-container" src="sample_1024_bunny.png" alt="after2">
+                </div>
+		<div> 
+            </div> 
+
+			<p class="caption"> Increasing number of samples per pixel while keeping light samples constant. </p>	
+			
+			<p class="left"> Pretty evidently increasing the number of samples per pixel reduces artifacts that come from noise, our pixel colors become a lot more smooth at higher sample levels and we do not see the dotted-ness that is present at lower sampling levels.
+</p>	
+			
         </section>
 
         <section>
