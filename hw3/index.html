@@ -228,7 +228,7 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
 		</p>
 		<p>The previous section covered uniform hemisphere sampling, where once again we basically casted rays from the point of intersection uniformly in a hemisphere. But as I show in the pictures, this leads to a lot of noise as many directions just do not end up going to a light source, resulting in point darkness throughout the photos. Basically the idea behind light sampling is that we first iterate through all the light sources and for each light source we take num_samples ray samples uniformly in the region of the light source. This way we are guaranteed to be casting a ray toward a light source (this does not guarantee a hit of the light source because as we will see the light source could be blocked). Another tricky part is that some light sources are point light sources, that means only one direction exists. This is okay we can simply remove redundant computation by taking our sampled light and multiplying it by num_samples. The rest of the machinery should be similar. Now I will go through some implementation details that we need to be careful about when implementing this feature. When we iterate though each of the light sources first see if it is a point light source or not (if it is the former we can save computation as discussed above). Now that we have a sampled direction, we do the same as in the previous part of converting the direction to a world-space ray. We already know that this ray will hit the light eventually because we sampled in that way, but it may potentially hit another object before, in that case the light source is blocked and we should have a shadow and not add the effect of the light onto the light at our point. To make sure of this we set the bounds of the ray to be minimum a little greater than 0 (same reason as before to make sure we do not intersect the point we are casting the ray from) and the max bounds is a little less than the distance to the ray. Now if there is an intersection it means we DO NOT add the light sampled into our sum since that means we hit something in between. Otherwise just as before we update our Monte-Carlo estimate and make sure to remove the bias as well. At the end similar to the previous case we divide the sum by the total number of samples.
 		</p>
-		<p>Now I present some renderings using uniform sampling and direct-lighting sampling.
+		<p>Now I present some renderings using uniform sampling and light-importance sampling.
 		</p>
 
 	<div class='im-container'>
@@ -241,23 +241,23 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
                 <img class="image-container" src="uniform_bunny.png" alt="iter1">
                 </div>
 		<div>	
-                <div class="label"> Direct-Light Sampled Bunny </div>    
+                <div class="label"> Light-Importance Sampled Bunny </div>    
                 <img class="image-container" src="bunny_l.png" alt="iter2">
                 </div>
 		<div>
-		<div class="label"> Direct-Light Sampled Spheres </div>    
+		<div class="label"> Light-Importance Sampled Spheres </div>    
                 <img class="image-container" src="spheres_L.png" alt="iter2">
                 </div>
 		<div>
-		<div class="label"> Direct-Light Sampled Dragon </div>    
+		<div class="label"> Light-Importance Sampled Dragon </div>    
                 <img class="image-container" src="dragon_L.png" alt="iter2">
                 </div>
             </div> 
-	<p class="caption">Here are some comparisons of direct-light sampling and uniform sampling. Clearly we see a lot more noise when we do uniform sampling.
+	<p class="caption">Here are some comparisons of light-importance sampling and uniform sampling. Clearly we see a lot more noise when we do uniform sampling.
 </p>
 		<p class="left">In comparing the uniform hemisphere sampling and the lighting sampling it is pretty clear that when all parameters are equal (sample numbers and light samples) lighting sampling has a much more clear rendering of the image. Even for pretty high sample values in both pixels and lights, uniform sampling produces quite noisy images, because we are sampling the whole hemisphere from a surface point, which naturally means a lot of non-collisions with light. If we just directly sample toward light sources and then adjust the pdf accordingly we are inherently reducing our sampling noise without compromising the bias of our sample. And we can see the results are much more clear, with very little noise and sharper images since we are directly sampling at a light source. </p>
 
-		<p class="left"> Now I present some images of the effect of the number of light samples on rendering quality using direct light sampling. We use 1 sample per pixel while increasing the number of light samples. </p>
+		<p class="left"> Now I present some images of the effect of the number of light samples on rendering quality using light-importance sampling. We use 1 sample per pixel while increasing the number of light samples. </p>
 	
 	<div class='im-container'>
                 <div>
@@ -340,7 +340,7 @@ Finally, adaptive sampling was implemented. The idea behind adaptive sampling is
             </div>
 	<p class="caption">Note how in the indirect lighting the light source is completely dark, which makes sense since indirect lighting accounts for light generating from bounces on other surfaces. </p>
 
-      <p class="left">Now I show the non-accumulating light at increasing depth of bounces (m) </p>
+      <p class="left">Now I show the non-accumulating light at increasing depth of bounces (variable m in the code). </p>
 
 	<div class='im-container'>
                 <div>
