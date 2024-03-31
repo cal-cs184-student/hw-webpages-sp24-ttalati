@@ -108,41 +108,47 @@ The last part was a bit different, it had us implement shaders, a quick way to i
             <h3>Part 1: Masses and Springs</h3>
             
             
-            <p>The entire pipeline of ray generation is that we trace out rays from the camera’s perspective of the image that is being captured onto the world. The points at which we intersect in the world (with the first intersection on the ray being the only one that counts since the image will be 2 dimensional) will have some radiant energy. We want to capture the radiance along the camera ray that went to the scene to get a better picture of the lighting in the environment, allowing us to have a better rendering and rasterization of the scene. Now that we understand the motivation behind ray-tracing; it gives a more physically accurate model of lighting that can be implemented to render more realistic images, we need the functionality to actually generate rays from the camera space out to the world. To make calculations easier, the image of interest is transformed into camera space from normalized image space, from which we then cast out a ray to a particular pixel. This ray is then converted into world space to make the coordinates consistent with the rest of the calculations that occur later. The equations for the conversion from normalized image to camera were laid out in the spec.             
+            <p>In this part the grid of point masses and the springs that interconnect the various point masses was implemented. This spring-mass representation of the cloth allows us to simulate physics that is used to approximate and simulate realistic cloth movement. The cloth was parameterized by num_width_points and num_height_points, representing the number of masses along the width and height of the cloth respectively. The third dimension was either set to 1 or a random number between -1/1000 and 1/1000 depending on the plane the cloth existed in. Furthermore if a cloth point mass was pinned, hence it would not be moving, that was set as well with a boolean flag.           
             </p>
 
-		<p>One thing to note is that the boundary of a pixel is the range of coordinates from (x, y) to (x+1, y+1). This was the case in simple rasterization as well, so the idea is we want to cast multiple rays out uniformly in that region to get a better understanding of the radiance we want to rasterize our pixel with. These two things were implemented in the first two parts of the task.
-
-        
+		<p>Once the grid of point masses was constructed, springs defining the interconnections between the point masses were created. There were three types of spring, representing different constraints: structural, shearing, and bending. Depending on the type of constraint, the spring connected different point masses according to how it was detailed out the spec. Once these mainly bookmarking implementations were complete, a mesh of connections could be seen. These meshes are shown below.
             </p>
 
-		<p>Next we actually dealt with implementing intersection tests with primitives. Particularly, the two primitives that we made intersection tests for were the sphere and triangle. The usage of these tests are wide: when we cast rays we want to understand the objects they intersect with in the world, which will allow us to then query for its light emittance and reflectance properties, depending on the ray that is being cast. These queries help us up the pipeline to actually determine the rasterized light intensity.           
+		<p>Below is the cloth wireframe showing all the connections both bending and steady behavior.        
             </p>
-
-		<p>In implementing ray-triangle intersection, I utilized the Möller–Trumbore formula presented in lecture. Essentially this equation presents a closed form solution that given the ray (parametrized by the starting point and the vector direction it is growing in [note that all of this is now done in world space, which we convert into using the transformation matrices provided]) and the three vertices of the triangle, it return a matrix-vector relationship that returns a vector [t, beta, gamma], where beta and gamma are the barycentric coordinates of the intersection point of the ray on (right now) the plane that the three points lie on and t represents the value of t where the intersection lies in. As one can imagine, this equation will always give us a vector, but we must sanitize the vector to make sure that the intersection actually exists inside the triangle and inside the domain of ray values that we consider valid. To see if the intersection is inside the triangle, we simply use the property of barycentric coordinates, specifically if alpha (1 - beta - gamma), beta, and gamma are all between 0 and 1 and sum to 1 that means the intersection is inside the triangle. Secondly, if t is between the min_t and max_t parameters this is a valid intersection as well. We now also update max_t to be the t value of this intersection since we do not want objects behind the first object to count as intersection because in reality they are blocked (at least when the object is opaque). 
-</p>
-
-		<p>Ray-sphere intersection was structurally similar, but the intersection point formula was a bit different. Specifically we know that a sphere is defined by (p - c) - r^2 = 0. Where p are the set of points on the boundary of the sphere, c is the center, and r is the radius. To test where the ray intersections with the sphere we simply plug in p_r + d * t (the equation of our ray) into p and solve for t, the only constant remaining. As shown in the lecture slides, when expanding the equation once we have plugged in the equation for our ray, we get a quadratic equation, of which we need to find the roots. This can be then done using the quadratic formula, which utilizes the coefficients of the quadratic equation. At the end of this process, we have a (or multiple or none) value for t. We then again test the potential values, keeping only the minimum value for t that also satisfies the constraint of being within min_t and max_t. And like previously, we update max_t to be the new t value, if a satisfying one was found.
-</p>
 
 	    <div class='im-container'>
                 <div>
-                <div class="label"> CBspheres </div>
-                <img class="image-container" src="CBspheres.png" alt="iter0">
+                <div class="label"> Grid-View </div>
+                <img class="image-container" src="grid.png" alt="iter0">
                 </div>
                 <div>  
-                <div class="label"> CBempty </div>    
-                <img class="image-container" src="CBempty.png" alt="iter1">
-                </div>
-		<div>  
-                <div class="label"> CBcoil </div>    
-                <img class="image-container" src="blob.png" alt="iter2">
+                <div class="label"> Showing the bending </div>    
+                <img class="image-container" src="bending.png" alt="iter1">
                 </div>
             </div>
 
-	<p class="caption">Showing some normal shading renders of scenes. This showcases a working intersection test and ray generation.
+	<p class="caption">Showing the grid view with all three constraints, representing working connection of point-masses using springs.
 </p>
-		
+<p class="left">
+		Now I just show some of the constraints individually.
+	</p>
+
+		 <div class='im-container'>
+                <div>
+                <div class="label"> All Three Constraints </div>
+                <img class="image-container" src="three.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label">Only Shearing Constraints </div>    
+                <img class="image-container" src="shearing.png" alt="iter1">
+                </div>
+		<div class="label">No Shearing (Bending and Structural) </div>    
+                <img class="image-container" src="noshearing.png" alt="iter1">
+                </div>
+            </div>
+			<p class="caption">Showing the connections when turning off some contraints the the view.
+</p>
         </section>
         
         <section>
