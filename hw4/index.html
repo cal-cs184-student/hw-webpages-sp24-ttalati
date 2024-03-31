@@ -1,7 +1,576 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Homework 4 index.html here
-	</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS 184 Homework 3, 
+Tanush Talati</title>
+    <style>
+	.left {
+		text-align: left;
+	}
+        .caption {
+            text-align: center;
+            font-style: italic;
+        }
+        .im-container { 
+            justify-content: space-between; 
+            margin-bottom: -10px;
+            flex-wrap: wrap;
+            text-align: center;
+        }
+        .label {
+            text-align: center;
+        }
+        .image-container {
+            width: 70%;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .image {
+            width: 100%;
+            margin-bottom: -10px;
+        }
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        h1, h2, h3, h4, h5, h6 {
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>CS 184 Homework 3: Pathtracer</h1>
+        <h2> 
+Tanush Talati </h2>
+    </header>
+    
+    <div class="container">
+        <h2>Overview</h2>
+
+	<p>
+	This assignment required us to implement many of the core functionality of path-tracing based renderers. It was split into five subparts.
+	</p>
+
+	<p>
+	In the first part ray-generation and simple intersection tests were implemented. Given that the rendering loop is trying to get an accurate picture of the light or the radiant intensity at each pixel, the idea is that we cast rays (the number depends on the sample size indicated) at each pixel unit-square and then use recursive ray-casting to ascertain the sum total of light being emitted from that point (the sum is of the direct and indirect light being reflected). Along the way to determine and book-keep which points our ray pass through, we need functionality to first generate rays from the camera space and second have intersection tests that can help determine if a ray passes through a certain polygon mesh component. 
+	</p>
+
+	<p>
+	In the second part a Bounding Volume Hierarchy was implemented. This data structure helps immensely speed up ray-tracing times. Without a BVH once a ray is casted, all the polygons and primitives are looped through for an intersection test to determine which polygon the ray intersects and naturally which one is the first polygon in the scene. When scaling to many different polygons or high ray and sample counts, clearly this method is too slow; a faster intersection test is required. This is where the BVH shines. Essentially we create a tree-like structure where primitives have been partitioned into smaller bounding boxes. One can imagine that testing if the ray hits a larger bounding box, which represents multiple primitives can essentially allow us to test intersection on a range of primitives at once and recurse to the right range, eliminating extraneous tests. This is very akin to binary search on a range of values, essentially helping our intersection search times decrease from a linear order of magnitude into a logarithmic order, scaling with the number of primitives. 
+	</p>
+
+    <p>
+	After much of the core machinery was built to allow us to implement ray-tracing, the next part actually focused on enabling rendering through light transport. Specifically, first BRDF functions were implemented for diffuse objects, which essentially indicates how the object reflects the light it receives outward, helping us know the radiance across each ray that is eventually traced. Next zero-bounce illumination and direct lighting estimates were implemented. Zero-bounce illumination was quite simple; we already knew where in the worldspace our intersection was and we just needed to query the BRDF function of that primitive. For direct-illumination, we needed to now generate a new ray from the intersection point out to the world. Usually to get an exact picture of the total light coming from another source to the intersection point, we would integrate over the entire hemisphere, but integration is clearly not feasible due to lack of closed-form solutions especially when we do multi-level ray-tracing, so instead Monte-Carlo sampling was used to estimate the value of the irradiance. Then after the irradiance was found, the BRDF function of the object helped actually return the amount of light transported in the direction of the incoming ray. At the end we made another realization. Specifically, instead of casting rays in all directions uniformly we could just cast a ray in a random direction toward a light source, this way noise of casting rays toward non-emitting sources could be reduced. Of course the pdf would be updated correspondingly to make all the sampling unbiased.
+    </p>
+    
+    <p>
+   After direct illumination was implemented, the next task was implementing global illumination. Essentially, in this task we generalize the 1-bounce nature in direct sampling to n-bounces, where n is an arbitrary user defined number. Clearly, this is a recursive process so the implementation was mainly setting up the recursive tools and correctly weighting the Monte-Carlo estimates to prevent bias. Essentially once you reach an intersection point you determine if you have any more bounces left, if you do you call the recursive function again by trying to see how much light is reflected into you from another light source. One observation in this method is that manually setting the number of bounces could itself lead to a biased rendering of the image. Taking that into account, the idea of russian roulette global illumination was implemented, where at each bounce there was a chance that no new rays would be cast. To implement this the existing code needed to be tweaked to stop early and we needed to remove a base case, which would be the natural stopping point in a deterministic recursive implementation.
+    </p>
+
+<p>
+
+Finally, adaptive sampling was implemented. The idea behind adaptive sampling is that sometimes our estimates for the radiance in a particular direction at an intersection point converges quite quickly, hence we do not need to take too many samples to understand the light properties. In these cases we can save time, without the expense of compromising render quality by just moving on to the next pixel. So this was exactly what was implemented; the maximum number of samples that it could take was set to a very high value but once we determined that our interval of sampled light was within a 95% confidence interval we stopped sampling and assigned the pixel radiance to the mean of the sampled values. 
+</p>
+	    
+        <section>
+            <h3>Part 1: Ray Generation and Scene Intersection</h3>
+            
+            
+            <p>The entire pipeline of ray generation is that we trace out rays from the camera’s perspective of the image that is being captured onto the world. The points at which we intersect in the world (with the first intersection on the ray being the only one that counts since the image will be 2 dimensional) will have some radiant energy. We want to capture the radiance along the camera ray that went to the scene to get a better picture of the lighting in the environment, allowing us to have a better rendering and rasterization of the scene. Now that we understand the motivation behind ray-tracing; it gives a more physically accurate model of lighting that can be implemented to render more realistic images, we need the functionality to actually generate rays from the camera space out to the world. To make calculations easier, the image of interest is transformed into camera space from normalized image space, from which we then cast out a ray to a particular pixel. This ray is then converted into world space to make the coordinates consistent with the rest of the calculations that occur later. The equations for the conversion from normalized image to camera were laid out in the spec.             
+            </p>
+
+		<p>One thing to note is that the boundary of a pixel is the range of coordinates from (x, y) to (x+1, y+1). This was the case in simple rasterization as well, so the idea is we want to cast multiple rays out uniformly in that region to get a better understanding of the radiance we want to rasterize our pixel with. These two things were implemented in the first two parts of the task.
+
+        
+            </p>
+
+		<p>Next we actually dealt with implementing intersection tests with primitives. Particularly, the two primitives that we made intersection tests for were the sphere and triangle. The usage of these tests are wide: when we cast rays we want to understand the objects they intersect with in the world, which will allow us to then query for its light emittance and reflectance properties, depending on the ray that is being cast. These queries help us up the pipeline to actually determine the rasterized light intensity.           
+            </p>
+
+		<p>In implementing ray-triangle intersection, I utilized the Möller–Trumbore formula presented in lecture. Essentially this equation presents a closed form solution that given the ray (parametrized by the starting point and the vector direction it is growing in [note that all of this is now done in world space, which we convert into using the transformation matrices provided]) and the three vertices of the triangle, it return a matrix-vector relationship that returns a vector [t, beta, gamma], where beta and gamma are the barycentric coordinates of the intersection point of the ray on (right now) the plane that the three points lie on and t represents the value of t where the intersection lies in. As one can imagine, this equation will always give us a vector, but we must sanitize the vector to make sure that the intersection actually exists inside the triangle and inside the domain of ray values that we consider valid. To see if the intersection is inside the triangle, we simply use the property of barycentric coordinates, specifically if alpha (1 - beta - gamma), beta, and gamma are all between 0 and 1 and sum to 1 that means the intersection is inside the triangle. Secondly, if t is between the min_t and max_t parameters this is a valid intersection as well. We now also update max_t to be the t value of this intersection since we do not want objects behind the first object to count as intersection because in reality they are blocked (at least when the object is opaque). 
+</p>
+
+		<p>Ray-sphere intersection was structurally similar, but the intersection point formula was a bit different. Specifically we know that a sphere is defined by (p - c) - r^2 = 0. Where p are the set of points on the boundary of the sphere, c is the center, and r is the radius. To test where the ray intersections with the sphere we simply plug in p_r + d * t (the equation of our ray) into p and solve for t, the only constant remaining. As shown in the lecture slides, when expanding the equation once we have plugged in the equation for our ray, we get a quadratic equation, of which we need to find the roots. This can be then done using the quadratic formula, which utilizes the coefficients of the quadratic equation. At the end of this process, we have a (or multiple or none) value for t. We then again test the potential values, keeping only the minimum value for t that also satisfies the constraint of being within min_t and max_t. And like previously, we update max_t to be the new t value, if a satisfying one was found.
+</p>
+
+	    <div class='im-container'>
+                <div>
+                <div class="label"> CBspheres </div>
+                <img class="image-container" src="CBspheres.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label"> CBempty </div>    
+                <img class="image-container" src="CBempty.png" alt="iter1">
+                </div>
+		<div>  
+                <div class="label"> CBcoil </div>    
+                <img class="image-container" src="blob.png" alt="iter2">
+                </div>
+            </div>
+
+	<p class="caption">Showing some normal shading renders of scenes. This showcases a working intersection test and ray generation.
+</p>
+		
+        </section>
+        
+        <section>
+            <h3>Part 2: Bounding Volume Hierarchy </h3>
+            <p> As noted in the overview, naively when testing whether or not a ray intersects a particular primitive, all the primitives are looped through and then we check for intersection on each one. This is linear in the order of the number of primitives, which could be pretty slow. This is where the BVH comes into play, a tree structure that helps cut the intersection test time to a logarithmic order, much more amenable to scaling. 
+	    </p>
+
+		<p>Constructing the BVH followed this process: namely the actual iterators for the primitives only exist at the leaf nodes. A node of the tree would become a leaf if the number of ongoing primitives were less than or equal to the maximum leaf size. This would basically function as our stopping point for recursion (or iteration as implemented in the extra credit) for creating new nodes in our BVH. The bulk of the logic is as follows for deciding the set of primitives that would belong to the right and left BVH nodes respectively. Basically given the root BVH node with a start and end iterator representing all the primitives that its bounding box covers, our job is to split it into two separate bounding boxes of primitives. Note that unlike KD-trees the bounding boxes are not disjoint but rather the primitives that are split are disjoint in a BVH. The splitting is determined by a heuristic. Initially just to check the functionality of the BVH I just split on the mean centroid of the x-axis but later I implemented a better heuristic. The heuristic that was used is as follows: we check all the three axis (x, y, z) and our candidate split point for each of the axis is the mean centroid location (so the mean of all the centroid locations for all the primitives along the axis of interest). On each of these candidates, I would check the surface area heuristic score. As introduced in lecture, essentially the score tries to minimize the chance of needless intersection tests. A heuristic for that determination is simply calculating the surface area of the bounding boxes of each split and multiplying it by the number of primitives in the split. The idea being that the number of intersection tests is proportional to the surface area of our split so minimizing it will reduce the intersections in the long run since the surface area encodes the probability of a ray hitting a bounding box node. Out of all the three axis, I kept the best (lowest) scoring split.  Once the split was determined, the goal was to actually add new child nodes and connect pointers to the parent. The parent node is confirmed not to be a leaf so it can now hold the pointers to the two new child pointers we create. Now the child nodes need an updated view of the iterators. These iterators were determined by editing the pointers that our iterators pointed to using a for loop that went through the new split primitives in order. This took a lot of time since initially just had one stack and set the iterators in the nodes but because the variables were declared as constants it would not allow me. I had to then use a 3-stack method (for the extra credit). Now that we have updated pointers and field variables, we can rely on the recursive base case to stop further iterating, once we have few primitives or no more actual splits (this was determined by checking if the array size of either the left or right split was zero, implying that we did not actually split [not possible with the heuristics we used]).	
+		</p>
+
+		<p>
+		Once the BVH construction is complete, whenever we have an intersection task, the data structure is used as a way to get fast, logarithmic search. Namely two methods intersect and has_intersect were constructed. has_intersect just concerns with if there is an intersection not where it is so one can imagine the logic is the same as intersect except we can return early since we are not worried about finding the first intersection, rather just knowing if there is an intersection or not. Therefore, I will talk about the intersect method. Here we first check if the ray even intersects the root node, if not we know it cannot intersect any of the children either so it allows us to not do any redundant intersection tests. If we do have a bounded box intersection, we simply check if the node is a child, because if it is then we check the intersections on the primitives, which was implemented in the previous part and we will get the first primitive that intersected. If not we run this recursive intersection method on the two children, and the recursive step will guarantee us knowing whether or not an intersection has occurred and if it has the intersection structure will have the right populated fields. 	
+		</p>
+
+		<p>Here are large dae files that would take a painfully long time to render with no acceleration. With acceleration all of them took easily less than .1 seconds, showcasing the massive speedup.
+		</p>
+       
+		<div class='im-container'>
+                <div>
+                <div class="label"> Dragon </div>
+                <img class="image-container" src="dragon.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label"> Max Planck </div>    
+                <img class="image-container" src="max.png" alt="iter1">
+                </div>
+		<div>  
+                <div class="label"> Lucy </div>    
+                <img class="image-container" src="lucy.png" alt="iter2">
+                </div>
+		<div>
+		<div class="label"> Wall-E </div>    
+                <img class="image-container" src="empty.png" alt="iter2">
+                </div>
+            </div> 
+
+	<p class="caption">All of these files are quite large so trying to render them without a BVH would take a lot longer.
+</p>
+
+	<p class="left">
+		In this section I give some of the runtimes of attempting to render without BVH and with BVH, showcasing the large speedup the data structure brings. 
+	</p>
+
+	<table>
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Non-BVH (seconds)</th>
+			<th>BVH (seconds)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>cow.dae</td>
+                        <td>3.223</td>
+			<td>0.053</td>
+                    </tr>
+                    <tr>
+                        <td>maxplanck.dae</td>
+                        <td>36.4196</td>
+			<td>0.071</td>
+                    </tr>
+		  <tr>
+                        <td>dragon.dae</td>
+                        <td>87.016</td>
+			<td>0.088</td>
+                    </tr>
+                </tbody>
+            </table>
+<p>It is pretty clear that having the BVH structure makes a large difference. The magnitude is 100x better even for smaller renders and obviously the speedup differential will continue to increase as the renders get larger and larger as the underlying difference between log x vs x in growth will only continue to increase. This large gain in speedup is massive because it allows us to do more intensive and more intersection tests in general and is one reason that the render times for having multiple samples and also multiple light samples for each pixel sample and then also adding the fact that we will have more bounces instead of just direct lighting is even possible, otherwise if our intersection tests were too slow, at each step we are adding this multiplicative factor of iterations and all of them depend on a fast intersection resolution protocol.</p>
+	
+        </section>
+
+        <section>
+            <h3>Part 3: Direct Illumination</h3>
+<p> In this part direct illumination was implemented. Specifically, both one-bounce lighting and zero-bounce lighting tracing was implemented. Lastly, two types of direct illumination were implemented and compared: uniform hemisphere sampling and light importance sampling.</p>
+		<p>Before implementing any sort reflectance measure, first we need to define the BSDF of our primitives. In this assignment all of the surfaces were taken as diffuse and hence we needed to implement the BSDF function that would reflect the irradiance at a point equally in all directions across the hemisphere. This is important in knowing how much light travels toward the camera or later toward a bounce in the direction that is being sampled. Once the BSDF function was implemented the first thing done was to implement the zero-bounce illumination. This means that only emissive sources would render. In the case of the assignment, the light source at the top of the Cornell box. This was pretty easy to implement as when the zero_bounce function is called, we simply return the object’s emission, which is a field variable. Upstream, that will just get set to the pixel’s radiance (or be a factor in it when we do multiple bounces).
+		</p>
+		<p>Once the bare was finished, the task was to actually implement direct lighting. In this case we make use of the function: one_bounce_radiance. Basically this returns the amount of light reflected on the particular intersection point as a result of the direct illumination of some light source. The implementation of the function was such, we repeat the same process for the user-specified number of samples per light area. And just to be consistent with the other method of direct light sampling, we multiply the number of samples by the number of light sources so in both cases we sample equally. But back to talking about uniform hemisphere sampling, inside the loop we already know the intersection point so our goal is to take the number of sample light measurements from that point by casting that many rays from that point onto a hemisphere. In this first method, the casted ray is uniformly sampled. So in summary we have num_samples * light_sources samples that we take of a casted ray from the intersection point. Now we measure where that casted ray intersects out in the world. This is a bit tricky, since first the casted ray that we sampled was in object space but intersections are in world space, so we convert the ray into world space and then use our intersection machinery we developed to see if it intersects an object in our world. Another thing we want to be careful about is to set the minimum value for the intersection to be a bit greater than 0 because we do not want the intersection with the point we are casting the ray from to count. Once we have received our t value for the intersection (and a boolean indicating whether or not intersection occurred), if the intersection in the world occurred and because we know where, through the mechanics of the light transport we know that the amount of light emitted by the intersecting object will be the amount transferred into our object. Then using the BSDF function we can determine finally how much of that light is reflected onto the camera. The idea of sampling is a Monte-Carlo approximation of the integral of all the light in the whole world, and because we are taking samples to approximate that average integral value, we must make sure to normalize by the probability of casting that sample. In this case it was uniform on the hemisphere hence 1/2*pi. The sum that is getting accumulated is the total light transferred to the camera, which is just the product of the bsdf function * light transferred from the ray cast from intersection point to intersection point * cos (angle between casted ray and surface normal). The cosine is there because that gives the scalar light intensity quantity into the surface. At the end we divide the accumulating sum (our estimate of the integral) by the number of samples. Also if there was no intersection from the casted ray notice how the accumulating sum just gets added with 0 which is what the appropriate behavior should be.
+		</p>
+		<p>The previous section covered uniform hemisphere sampling, where once again we basically casted rays from the point of intersection uniformly in a hemisphere. But as I show in the pictures, this leads to a lot of noise as many directions just do not end up going to a light source, resulting in point darkness throughout the photos. Basically the idea behind light sampling is that we first iterate through all the light sources and for each light source we take num_samples ray samples uniformly in the region of the light source. This way we are guaranteed to be casting a ray toward a light source (this does not guarantee a hit of the light source because as we will see the light source could be blocked). Another tricky part is that some light sources are point light sources, that means only one direction exists. This is okay we can simply remove redundant computation by taking our sampled light and multiplying it by num_samples. The rest of the machinery should be similar. Now I will go through some implementation details that we need to be careful about when implementing this feature. When we iterate though each of the light sources first see if it is a point light source or not (if it is the former we can save computation as discussed above). Now that we have a sampled direction, we do the same as in the previous part of converting the direction to a world-space ray. We already know that this ray will hit the light eventually because we sampled in that way, but it may potentially hit another object before, in that case the light source is blocked and we should have a shadow and not add the effect of the light onto the light at our point. To make sure of this we set the bounds of the ray to be minimum a little greater than 0 (same reason as before to make sure we do not intersect the point we are casting the ray from) and the max bounds is a little less than the distance to the ray. Now if there is an intersection it means we DO NOT add the light sampled into our sum since that means we hit something in between. Otherwise just as before we update our Monte-Carlo estimate and make sure to remove the bias as well. At the end similar to the previous case we divide the sum by the total number of samples.
+		</p>
+		<p>Now I present some renderings using uniform sampling and light-importance sampling.
+		</p>
+
+	<div class='im-container'>
+                <div>
+                <div class="label"> Uniform Sampled Bunny </div>
+                <img class="image-container" src="unif_bunny.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label"> Uniform Sampled Spheres </div>    
+                <img class="image-container" src="uniform_bunny.png" alt="iter1">
+                </div>
+		<div>	
+                <div class="label"> Light-Importance Sampled Bunny </div>    
+                <img class="image-container" src="bunny_l.png" alt="iter2">
+                </div>
+		<div>
+		<div class="label"> Light-Importance Sampled Spheres </div>    
+                <img class="image-container" src="spheres_L.png" alt="iter2">
+                </div>
+		<div>
+		<div class="label"> Light-Importance Sampled Dragon </div>    
+                <img class="image-container" src="dragon_L.png" alt="iter2">
+                </div>
+            </div> 
+	<p class="caption">Here are some comparisons of light-importance sampling and uniform sampling. Clearly we see a lot more noise when we do uniform sampling.
+</p>
+		<p class="left">In comparing the uniform hemisphere sampling and the lighting sampling it is pretty clear that when all parameters are equal (sample numbers and light samples) lighting sampling has a much more clear rendering of the image. Even for pretty high sample values in both pixels and lights, uniform sampling produces quite noisy images, because we are sampling the whole hemisphere from a surface point, which naturally means a lot of non-collisions with light. If we just directly sample toward light sources and then adjust the pdf accordingly we are inherently reducing our sampling noise without compromising the bias of our sample. And we can see the results are much more clear, with very little noise and sharper images since we are directly sampling at a light source. </p>
+
+		<p class="left"> Now I present some images of the effect of the number of light samples on rendering quality using light-importance sampling. We use 1 sample per pixel while increasing the number of light samples. </p>
+	
+	<div class='im-container'>
+                <div>
+                <div class="label"> 1 Light Sample </div>
+                <img class="image-container" src="1_l.png" alt="flatshading">
+                </div>
+                <div>  
+                <div class="label"> 4 Light Samples </div>    
+                <img class="image-container" src="4_l.png" alt="phongshading">
+                </div>
+		<div>  
+		<div class="label"> 16 Light Samples </div>    
+                <img class="image-container" src="16_l.png" alt="phongshading">
+                </div>
+		<div>  
+		<div class="label"> 64 Light Samples </div>    
+                <img class="image-container" src="64_l.png" alt="phongshading">
+                </div>
+		<div>  
+            </div>
+	<p class="caption">We see pretty clearly that using more light samples also helps reduce the noise and increase quality to renders. This meakes sense as it is the same idea behind super sampling. One can also imagine that if we used unifotm sampling instead of direct-light, we would see a lot more noise at each of these light levels.
+
+</p>
+	
+        </section>
+
+        <section>
+            <h3>Part 4: Global Illumination</h3>
+
+<p>In this task global illumination was implemented, namely the one bounce lighting from the previous part was extended to an arbitrary amount of bounces. The direct illumination part is the same as the zero_bounce so that just gets added, but the indirect illumination can take into account light that arrives at an intersection points after up to N bounces. Some bookkeeping that needed to be done is to first update the driver function est_radiance_global_illumination to return the sum of the zeroth and the at_least_one function call instead of one. Now we edit the at_least_one function to implement the up to N bounce functionality. To do this we make use of the depth of the ray. If the depth of the ray is 1 then we simply only return the 1-bounce lighting estimate. Otherwise we have space for more bounces. In this case we want to recurse and add to our 1-bounce estimate any downstream lighting that we received (because we want to get the total, if isAccumulate is off we just return the tail call / final recursive call’s calculation of the lighting which will allow us to only showcase the lighting at the Nth layer of bounce). To recurse we sample a bouncing ray from the intersection point and similar to before we see if that ray hits any other point on the world if it does then we find the lighting reflected from it using the same recursive call to this at_least_one_function. Before doing the recursive call though, we must make sure to decrease the depth of our ray by one to make sure we have a base case. The recursive call will guarantee to return us the total light accumulated from downstream bounces. We simply add that to our direct 1-bounce estimate and that is the total light we return. Similar to before when we sample the downstream bounces, we must adjust the weights by dividing by the pdf to make sure the sample does not become biased. The accumulating light estimate uses the same formula as the previous part. As it is pretty clear, the only major edit is having a recursive function and updating the driver function to call the recursive version of the function instead of just the one_bounce version. </p>
+
+<p>The last part that I had to implement in this task was having global illumination with Russian roulette. The motivation being that having some constant for the number of bounces might in itself introduce sampling bias. To mitigate that we can simply make the number of bounces also non-deterministic. In particular at every bounce (past the first) there is a small chance that we will not sample that bounce. This way we do not have a biased stopping point for light and on average if the termination probability is around 0.3 like suggested we get around 1 + 3.3 bounces.  We can also further configure the maximum depth if we do not want for some reason to go above some specified depth (similar to the configuration in the adaptive sample). Russian roulette capability was added into the existing at_least_one_bounce function by just setting a boolean flag called recur, which would be true if the coin toss was a head (or if this is our first bounce anyway which we want to take if we have set indirect illumination to on). After which the body of the function is the same as before expect we also need to divide by the pdf of the coin toss being true to not prevent bias when we are accumulating our lighting estimate. If we want an absolute maximum stopping point then we can keep the logic from before having the base-case being hit when our running depth counts that we reduce with each recursive call hits 1.</p>
+
+<p>Here I show some images of global illumination working on various scenes</p>
+		<div class='im-container'>
+                <div>
+                <div class="label"> Spheres </div>
+                <img class="image-container" src="1024_gl_sphere.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> Blob </div>    
+                <img class="image-container" src="1024_gl_blob.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> Bunny </div>    
+                <img class="image-container" src="1024_gl_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> Dragon </div>    
+                <img class="image-container" src="1024_gl_dragon.png" alt="after2">
+                </div>
+		<div> 
+            </div>
+		<p class="caption">Working global illumination. Pictures rendered with samples per pixel being 1024. </p>
+
+<p class="left">The next set of pictures compare scenes with only direct lighting and then showing the effects of only indirect lighting.</p>
+
+	 <div class='im-container'>
+                <div>
+                <div class="label"> Direct Lighting on Bunny </div>
+                <img class="image-container" src="direct_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> Indirect Lighting on Bunny </div>    
+                <img class="image-container" src="indirect_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> Direct Lighting on Spheres </div>    
+                <img class="image-container" src="direct_balls.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> Indirect Lighting on Spheres </div>    
+                <img class="image-container" src="indirect_spheres.png" alt="after2">
+                </div>
+		<div> 
+            </div>
+	<p class="caption">Note how in the indirect lighting the light source is completely dark, which makes sense since indirect lighting accounts for light generating from bounces on other surfaces. </p>
+
+      <p class="left">Now I show the non-accumulating light at increasing depth of bounces (variable m in the code). </p>
+
+	<div class='im-container'>
+                <div>
+                <div class="label"> m = 0 </div>
+                <img class="image-container" src="no_accum_0_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> m = 1 </div>    
+                <img class="image-container" src="no_accum_1_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> m = 2 </div>    
+                <img class="image-container" src="no_accum_2_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 3 </div>    
+                <img class="image-container" src="no_accum_3_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 4 </div>    
+                <img class="image-container" src="no_accum_4_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 5 </div>    
+                <img class="image-container" src="no_accum_5_bunny.png" alt="after2">
+                </div>
+		<div> 
+            </div>
+
+<p class="caption">Note how there is an apparent decrease in the amount of light affecting the global illumination from subsequent layers. </p>
+
+<p class="left">As mentioned above each subsequent layer we see a decrease in lighting indicating the fact that the effect of that layer on the global light becomes less and less at higher depth levels. We see a particularly sharp drop off between the layer 2 and layer 3, where layer 3 is much darker. This makes sense intuitively as trying to sample light that comes 3 bounces into the camera may not actually hit a light source because there is a good chance one of the rays just hits another part or hits a shadow covering. This probability becomes higher and higher at larger levels, explaining the darkness.
+</p>
+
+<p class="left">The set of pictures below show the accumulating global illumination as a function of higher depth levels.
+</p>
+
+<div class='im-container'>
+                <div>
+                <div class="label"> m = 0 </div>
+                <img class="image-container" src="accum_0_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> m = 1 </div>    
+                <img class="image-container" src="accum_1_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> m = 2 </div>    
+                <img class="image-container" src="accum_2_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 3 </div>    
+                <img class="image-container" src="accum_3_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 4 </div>    
+                <img class="image-container" src="accum_4_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 5 </div>    
+                <img class="image-container" src="accum_5_bunny.png" alt="after2">
+                </div>
+		<div> 
+            </div> 
+			<p class="caption">As with all the photos in this sections we are using 1024 samples per pixel in these renderings. </p>
+
+<p class="left">As seen in these photos if we have higher depths of global illumination our images look brighter, which makes sense because each level is adding some degree of light. However the rate of change of this brightness is also begins to fall off at higher depth levels. We could have predicted this after looking at the previous set of images that showed decreasing light at non-accumulating depth levels.
+</p>
+
+			<p class="left">Now I will show the renderings using Russian-Roulette rendering with increasing depth levels.
+</p>
+	<div class='im-container'>
+                <div>
+                <div class="label"> m = 0 </div>
+                <img class="image-container" src="russian_0_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> m = 1 </div>    
+                <img class="image-container" src="russian_1_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> m = 2 </div>    
+                <img class="image-container" src="russian_2_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 3 </div>    
+                <img class="image-container" src="russian_3_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 4 </div>    
+                <img class="image-container" src="russian_4_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 100 </div>    
+                <img class="image-container" src="russian_100_bunny.png" alt="after2">
+                </div>
+		<div> 
+            </div> 
+
+			<p class="caption">Russian Roulette rendering with increasing max_depth levels. Samples per pixel was still 1024. </p>	
+		<p class="left">We see that past around m = 3 the images start looking very similar, especially when comparing m = 4 and m = 100. This makes sense as the parameter used to render these was p = 0.35, which makes our expected bounces around 1 + 3 = 4. The one because we hard code always making one bounce and then apply Russian Roulette.
+</p>	
+
+			<p class="left"> Now I am going to compare the renderings when increasing number of pixels per sample while keeping light samples constant at 4.
+</p>	
+			<div class='im-container'>
+                <div>
+                <div class="label">  m = 1 </div>
+                <img class="image-container" src="sample_1_bunny.png" alt="before">
+                </div>
+                <div>  
+                <div class="label"> m = 2 </div>    
+                <img class="image-container" src="sample_2_bunny.png" alt="after1">
+                </div>
+		<div>  
+		<div>  
+                <div class="label"> m = 4 </div>    
+                <img class="image-container" src="sample_4_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 8 </div>    
+                <img class="image-container" src="sample_8_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 16 </div>    
+                <img class="image-container" src="sample_16_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 64 </div>    
+                <img class="image-container" src="sample_64_bunny.png" alt="after2">
+                </div>
+		<div> 
+		<div>  
+                <div class="label"> m = 1024 </div>    
+                <img class="image-container" src="sample_1024_bunny.png" alt="after2">
+                </div>
+		<div> 
+            </div> 
+
+			<p class="caption"> Increasing number of samples per pixel while keeping light samples constant. </p>	
+			
+			<p class="left"> Pretty evidently increasing the number of samples per pixel reduces artifacts that come from noise, our pixel colors become a lot more smooth at higher sample levels and we do not see the dotted-ness that is present at lower sampling levels.
+</p>	
+			
+        </section>
+
+        <section>
+             <h3>Part 5: Adaptive Sampling</h3>
+            <p> The idea behind adaptive sampling is that we can reduce the noise in our rendered images by only stopping sampling once we are confident about the light estimate at the point. Specifically we implement a 95% confidence interval. In implementing this most of the work is in the outermost function: raytrace_pixel. Here is where we take different ray samples to estimate lighting. Basically the idea is as we are taking these ray samples of lighting we accumulate the mean lighting and the standard deviation of the lighting samples. If the mean * 1.96 *(standard deviation of lighting estimate) / sqrt (number of running samples) represents only a 5% of a deviation from our running estimate mean, then we can claim confident convergence of our mean value and assign that to the pixel’s radiance value. One may notice that having to update the current mean and standard deviation of the average is quite an expensive task if done with every ray sample. To mitigate most probably redundant computation, we define a batch size after which we recalculate the estimates and determine convergence. When the batch size is not met we simply keep a streaming count of the current sum of the light samples and the sum of the samples squared because both of these terms help us calculate the end statistics that will lead to convergence. One can also imagine pathological instances where convergence is very tough especially at high frequency locations. In this case we will resort to an absolute maximum number of samples as being the worst-case endpoint for our lighting estimate. Usually this number is quite large since the chance of reaching it is low as convergence will usually be achieved before. 
+</p>
+<p>
+Attached below are two scenes rendered with adaptive sampling with a maximum sample size of 2048.
+</p>
+            <div class='im-container'>
+                <div>
+                <div class="label">Bunny Image </div>
+                <img class="image-container" src="adapt_bunny.png" alt="tp">
+                </div>
+                <div>  
+                <div class="label"> Bunny Sampling Rate Image</div>    
+                <img class="image-container" src="adapt_bunny_rate.png" alt="tpflip">
+                </div>
+                <div>
+                <div class="label"> Spheres Image </div>
+                <img class="image-container" src="adapt_balls.png" alt="tpflips">
+                </div>
+		    <div>
+                <div class="label"> Spheres Sampling Rate Image </div>
+                <img class="image-container" src="adapt_balls_rate.png" alt="tpflips">
+                </div>
+            </div>
+            <p class="caption">Showing the rendered scenes using adaptive sampling and the associated sample rates. Notice how high frequency areas tend to have higher sampling rates. These images were rendered using depth of 5 and 1 sample per light.
+</p>
+
+		
+        </section>
+
+        <section>
+             <h3>Part 6: Extra Credit</h3>
+		<p>For extra credit I implemented two different changes, both to the BVH to make it run faster.</p>
+		<h4>Extra Credit 1: Non-Recursive BVH</h4>
+
+        <p>
+	The first optimization I did was to implement the BVH using an iterative approach instead of a recursive one. In order to do this, I used a stack and a while loop. Once the stack was empty, I would know that I had finished making the new nodes and the entire BVH structure was ready. When I needed to make new children nodes (when one of the stopping points had not been met yet like too many primitives existing in the bounding box) I would create the two children nodes and then push them to the stack. This is the same thing as creating two children nodes and recursing on them in DFS order but we save the need to create a new function call and instead can do everything inside the original function. One thing that was particularly tough (maybe this would be obvious for someone more adept with C++) was the fact that the fields in the BVH node structure were defined to be constants and initially I was also placing the updated iterators there but that would not work since one can imagine you need to reupdate the iterators as you make downstream edits. I got around this by adding two extra stacks that held the start and end iterators for each of the on-going nodes. I am still not sure if this is the best way to get around the constants but I can imagine right now it is one place that can be updated to make this even faster.
+	</p>
+		<p>When noticing the difference between recursive implementation and an iterative on, there was a clear around 18% boost in timing performance, with the rate being more accurate for larger renders. </p>
+<h4>Extra Credit 2: Surface Area Heuristic for BVH Node Split</h4>
+		<p>The second extra credit item I worked on was applying a different heuristic to the split the primitives into two separate nodes. Specifically, I implemented the surface area based split that was introduced in lecture. Specifically we hypothesize that the hit rate of a node is the proportional to the ratio of the surface area of the outer bounding box to the inner bounding box and hence we want to minimize the hit rate to minimize expected hits and the expected time on intersection. Implementing the surface area heuristic was simple, I just needed to add code that added this score and then I compared the split across 3 different axis, x, y, z. I only split on the mean centroid but one could imagine extending this out to also check each partition between the primitives and seeing if the split was better. But given the meshes we were dealing with, I did not think it would make too much of a difference on the end result given the amount of overhead in preprocessing that split. But the surface area split showed significant improvements over the other split I was previously using. Specifically, having a nicely configured split was showcasing around a drop of 40% in the amount of intersection tests per ray (from around 7 on average to 4). This is significant as that has a huge repercussions in reducing the run times of our tracing times.
+		</p>
+
+		
+        </section>
+			
+<!-- 
+			<table>
+                <thead>
+                    <tr>
+                        <th>Column 1</th>
+                        <th>Column 2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Data 1</td>
+                        <td>Data 2</td>
+                    </tr>
+                    <tr>
+                        <td>Data 3</td>
+                        <td>Data 4</td>
+                    </tr>
+                </tbody>
+            </table> -->
+        
+        <!-- Add more sections as needed -->
+        
+    </div>
+</body>
 </html>
