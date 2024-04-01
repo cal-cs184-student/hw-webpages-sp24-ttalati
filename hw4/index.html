@@ -152,74 +152,111 @@ The last part was a bit different, it had us implement shaders, a quick way to i
         </section>
         
         <section>
-            <h3>Part 2: Bounding Volume Hierarchy </h3>
-            <p> As noted in the overview, naively when testing whether or not a ray intersects a particular primitive, all the primitives are looped through and then we check for intersection on each one. This is linear in the order of the number of primitives, which could be pretty slow. This is where the BVH comes into play, a tree structure that helps cut the intersection test time to a logarithmic order, much more amenable to scaling. 
+            <h3>Part 2: Simulation via Numerical Integration </h3>
+            <p> This section enabled actual cloth simulation. Basically the positions at the next time step, calculated by taking into account the forces exerted on each of the point-masses at the current time-step were calculated using verlet integration. Specifically since the system consists of a lot of interconnected springs, each point mass would have forces being exerted on it by these springs, which can be found out through Hooke’s law. Then applying the rules of dynamics, we know acceleration, mass, and force are related by F = ma, allowing us to find the acceleration and its direction by dividing the force by the mass of the point. Then we can use the equations given my verlet integration to find the new point location of the mass. Doing this point-mass location calculation for all of the pointmasses would help move the grid and give the new position of the cloth. Essentially the new position was calculated as follow x_new = x_old + v_curr * time + a_curr * time^2. And v_curr * time was simply estimated as x_curr - x_old. The exact quantity of time is also dependent on the number of simulation steps per frame and the number of frames per second. Finally since this method of approximation is not stable, we physically bounded the values x could take on. Specifically x could only be at most 10% off its rest position. This would make clothes act more realistically as we know usually it does not move out of place by a large amount.  
 	    </p>
 
-		<p>Constructing the BVH followed this process: namely the actual iterators for the primitives only exist at the leaf nodes. A node of the tree would become a leaf if the number of ongoing primitives were less than or equal to the maximum leaf size. This would basically function as our stopping point for recursion (or iteration as implemented in the extra credit) for creating new nodes in our BVH. The bulk of the logic is as follows for deciding the set of primitives that would belong to the right and left BVH nodes respectively. Basically given the root BVH node with a start and end iterator representing all the primitives that its bounding box covers, our job is to split it into two separate bounding boxes of primitives. Note that unlike KD-trees the bounding boxes are not disjoint but rather the primitives that are split are disjoint in a BVH. The splitting is determined by a heuristic. Initially just to check the functionality of the BVH I just split on the mean centroid of the x-axis but later I implemented a better heuristic. The heuristic that was used is as follows: we check all the three axis (x, y, z) and our candidate split point for each of the axis is the mean centroid location (so the mean of all the centroid locations for all the primitives along the axis of interest). On each of these candidates, I would check the surface area heuristic score. As introduced in lecture, essentially the score tries to minimize the chance of needless intersection tests. A heuristic for that determination is simply calculating the surface area of the bounding boxes of each split and multiplying it by the number of primitives in the split. The idea being that the number of intersection tests is proportional to the surface area of our split so minimizing it will reduce the intersections in the long run since the surface area encodes the probability of a ray hitting a bounding box node. Out of all the three axis, I kept the best (lowest) scoring split.  Once the split was determined, the goal was to actually add new child nodes and connect pointers to the parent. The parent node is confirmed not to be a leaf so it can now hold the pointers to the two new child pointers we create. Now the child nodes need an updated view of the iterators. These iterators were determined by editing the pointers that our iterators pointed to using a for loop that went through the new split primitives in order. This took a lot of time since initially just had one stack and set the iterators in the nodes but because the variables were declared as constants it would not allow me. I had to then use a 3-stack method (for the extra credit). Now that we have updated pointers and field variables, we can rely on the recursive base case to stop further iterating, once we have few primitives or no more actual splits (this was determined by checking if the array size of either the left or right split was zero, implying that we did not actually split [not possible with the heuristics we used]).	
+		<p>Below are photos showing a working implementation of the cloth simulation, manipulating some of the variables that control the dynamics. 
 		</p>
 
-		<p>
-		Once the BVH construction is complete, whenever we have an intersection task, the data structure is used as a way to get fast, logarithmic search. Namely two methods intersect and has_intersect were constructed. has_intersect just concerns with if there is an intersection not where it is so one can imagine the logic is the same as intersect except we can return early since we are not worried about finding the first intersection, rather just knowing if there is an intersection or not. Therefore, I will talk about the intersect method. Here we first check if the ray even intersects the root node, if not we know it cannot intersect any of the children either so it allows us to not do any redundant intersection tests. If we do have a bounded box intersection, we simply check if the node is a child, because if it is then we check the intersections on the primitives, which was implemented in the previous part and we will get the first primitive that intersected. If not we run this recursive intersection method on the two children, and the recursive step will guarantee us knowing whether or not an intersection has occurred and if it has the intersection structure will have the right populated fields. 	
-		</p>
+				<div class='im-container'>
+                <div>
+                <div class="label"> No change default </div>
+                <img class="image-container" src="default.png" alt="iter0">
+                </div>
+            </div> 
 
-		<p>Here are large dae files that would take a painfully long time to render with no acceleration. With acceleration all of them took easily less than .1 seconds, showcasing the massive speedup.
+		<p class='left'>
+		First we change k_s.	
 		</p>
        
 		<div class='im-container'>
                 <div>
-                <div class="label"> Dragon </div>
-                <img class="image-container" src="dragon.png" alt="iter0">
+                <div class="label"> k_s = 100 N/m </div>
+                <img class="image-container" src="100.png" alt="iter0">
                 </div>
                 <div>  
-                <div class="label"> Max Planck </div>    
-                <img class="image-container" src="max.png" alt="iter1">
+                <div class="label"> k_s = 10,000 N/m </div>    
+                <img class="image-container" src="10000.png" alt="iter1">
                 </div>
 		<div>  
-                <div class="label"> Lucy </div>    
-                <img class="image-container" src="lucy.png" alt="iter2">
+                <div class="label"> k_s = 100,000 N/m </div>    
+                <img class="image-container" src="100000.png" alt="iter2">
                 </div>
 		<div>
-		<div class="label"> Wall-E </div>    
-                <img class="image-container" src="empty.png" alt="iter2">
+            </div> 
+
+	<p class="caption">Varying the spring constant value.
+</p>
+
+	<p class="left">In comparing the images it is clear that increasing k_s lowers the elasticity of the cloth. Specifically we see the cloth has less of a bend with higher values of k_s. Which makes sense since the force being exerted downward on the cloth does not change but since we have higher k_s, our acceleration downward and hence our displacement downward later on will decrease. In summary a lower k_s value indicates higher cloth elasticity and higher displacement when the same force is applied.
+</p>
+
+<p>Now we change density</p>	
+			
+<div class='im-container'>
+                <div>
+                <div class="label"> d = 1 g/cm^2 </div>
+                <img class="image-container" src="d1.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label"> d = 15 g/cm^2 </div>    
+                <img class="image-container" src="d15.png" alt="iter1">
+                </div>
+		<div>  
+                <div class="label"> d = 1500 g/cm^2 </div>    
+                <img class="image-container" src="d1500.png" alt="iter2">
+                </div>
+		<div>
+            </div> 
+
+	<p class="caption">Varying the density value.
+</p>
+
+	
+<p class='left'>We notice that reducing the density reduces the bending effect on the cloth. This is expected and explained again using the relationship of F = ma. Specifically a lower density means that each point mass also has a reduced mass. Now, the external force, in this case gravity remains the same so if we have a reduced mass and the same acceleration, our force itself has been reduced. Since the springs’ physical properties have not been changed, they will displace less compared to before, explaining the lower levels of bending with reduced density. </p>
+
+<p>Now we change damping value</p>	
+			
+<div class='im-container'>
+                <div>
+                <div class="label"> damp = 0%</div>
+                <img class="image-container" src="0damp.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label"> damp = .01% </div>    
+                <img class="image-container" src="damp.01.png" alt="iter1">
+                </div>
+		<div>  
+                <div class="label"> damp = 1% </div>    
+                <img class="image-container" src="1damp.png" alt="iter2">
+                </div>
+		<div>
+            </div> 
+
+	<p class="caption">Varying the damp percent.
+</p>
+
+	<p class='left'>Damping is basically an external factor that we add to simulate energy loss through a variety of physical means for instance friction. When comparing the different simulations on different damping parameters, it was clear that higher damping rates lead to the cloth reaching its steady state position much faster. It also leads to less oscillations before reaching steady state, which makes sense as our forces zero-out much quicker with damping. On the other extreme, having no damping lead to no steady-state being reached; the cloth would continue infinitely moving. With higher damping the cloth also took longer to fall down, which also makes sense since we need to wait for more iterations of fresh gravitational force to move downward. </p>
+
+	<p>Now I show pinned4.json at its default steady state.
+</p>	
+			
+<div class='im-container'>
+                <div>
+                <div class="label"> Wireframe </div>
+                <img class="image-container" src="pinned4wire.png" alt="iter0">
+                </div>
+                <div>  
+                <div class="label"> Normal Shading </div>    
+                <img class="image-container" src="pinned4.png" alt="iter1">
                 </div>
             </div> 
 
-	<p class="caption">All of these files are quite large so trying to render them without a BVH would take a lot longer.
+	<p class="caption">Showing pinned4.json in resting state.
 </p>
 
-	<p class="left">
-		In this section I give some of the runtimes of attempting to render without BVH and with BVH, showcasing the large speedup the data structure brings. 
-	</p>
 
-	<table>
-                <thead>
-                    <tr>
-                        <th>File Name</th>
-                        <th>Non-BVH (seconds)</th>
-			<th>BVH (seconds)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>cow.dae</td>
-                        <td>3.223</td>
-			<td>0.053</td>
-                    </tr>
-                    <tr>
-                        <td>maxplanck.dae</td>
-                        <td>36.4196</td>
-			<td>0.071</td>
-                    </tr>
-		  <tr>
-                        <td>dragon.dae</td>
-                        <td>87.016</td>
-			<td>0.088</td>
-                    </tr>
-                </tbody>
-            </table>
-<p>It is pretty clear that having the BVH structure makes a large difference. The magnitude is 100x better even for smaller renders and obviously the speedup differential will continue to increase as the renders get larger and larger as the underlying difference between log x vs x in growth will only continue to increase. This large gain in speedup is massive because it allows us to do more intensive and more intersection tests in general and is one reason that the render times for having multiple samples and also multiple light samples for each pixel sample and then also adding the fact that we will have more bounces instead of just direct lighting is even possible, otherwise if our intersection tests were too slow, at each step we are adding this multiplicative factor of iterations and all of them depend on a fast intersection resolution protocol.</p>
-	
         </section>
 
         <section>
