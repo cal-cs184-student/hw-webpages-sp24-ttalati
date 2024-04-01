@@ -399,7 +399,7 @@ The last part was a bit different, it had us implement shaders, a quick way to i
                 </div>
 		<div> 
 		<div>  
-                <div class="label">d = 1g/cm^2 late </div>    
+                <div class="label">d = 1000g/cm^2 late </div>    
                 <img class="image-container" src="den1000fl.png" alt="after2">
                 </div>
 		<div> 
@@ -413,7 +413,7 @@ The last part was a bit different, it had us implement shaders, a quick way to i
         </section>
 
         <section>
-             <h3>Part 5: Adaptive Sampling</h3>
+             <h3>Part 5: Shaders</h3>
             <p> The idea behind adaptive sampling is that we can reduce the noise in our rendered images by only stopping sampling once we are confident about the light estimate at the point. Specifically we implement a 95% confidence interval. In implementing this most of the work is in the outermost function: raytrace_pixel. Here is where we take different ray samples to estimate lighting. Basically the idea is as we are taking these ray samples of lighting we accumulate the mean lighting and the standard deviation of the lighting samples. If the mean * 1.96 *(standard deviation of lighting estimate) / sqrt (number of running samples) represents only a 5% of a deviation from our running estimate mean, then we can claim confident convergence of our mean value and assign that to the pixel’s radiance value. One may notice that having to update the current mean and standard deviation of the average is quite an expensive task if done with every ray sample. To mitigate most probably redundant computation, we define a batch size after which we recalculate the estimates and determine convergence. When the batch size is not met we simply keep a streaming count of the current sum of the light samples and the sum of the samples squared because both of these terms help us calculate the end statistics that will lead to convergence. One can also imagine pathological instances where convergence is very tough especially at high frequency locations. In this case we will resort to an absolute maximum number of samples as being the worst-case endpoint for our lighting estimate. Usually this number is quite large since the chance of reaching it is low as convergence will usually be achieved before. 
 </p>
 <p>
