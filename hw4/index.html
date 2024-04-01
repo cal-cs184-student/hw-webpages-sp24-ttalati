@@ -282,29 +282,15 @@ The last part was a bit different, it had us implement shaders, a quick way to i
 </p>
 		<p class="left">It is clear as the spring constant increases our cloth looks increasingly stiff as it becomes increasingly inelastic. This stiffness manifests in the appearance over the sphere of the cloth not fully resting on the sphere and instead with higher levels of spring constant value the bottom of the cloth rests higher. This makes sense consider paper, if we rest it on top of a sphere it would act more stiff and not fully take on the ball-like shape. On the other hand if we took a more foldable material like cloth for instance, it could be modeled with lower spring constant value and would more nicely take on the shape of the cloth. </p>
 
-		<p class="left"> Now I present some images of the effect of the number of light samples on rendering quality using light-importance sampling. We use 1 sample per pixel while increasing the number of light samples. </p>
+		<p class="left"> Below is the cloth-plane collision scene, helping show the effective implementation of such collision detection. </p>
 	
 	<div class='im-container'>
                 <div>
-                <div class="label"> 1 Light Sample </div>
-                <img class="image-container" src="1_l.png" alt="flatshading">
+                <div class="label">Cloth-Plane Intersection </div>
+                <img class="image-container" src="planeint.png" alt="flatshading">
                 </div>
-                <div>  
-                <div class="label"> 4 Light Samples </div>    
-                <img class="image-container" src="4_l.png" alt="phongshading">
-                </div>
-		<div>  
-		<div class="label"> 16 Light Samples </div>    
-                <img class="image-container" src="16_l.png" alt="phongshading">
-                </div>
-		<div>  
-		<div class="label"> 64 Light Samples </div>    
-                <img class="image-container" src="64_l.png" alt="phongshading">
-                </div>
-		<div>  
             </div>
-	<p class="caption">We see pretty clearly that using more light samples also helps reduce the noise and increase quality to renders. This meakes sense as it is the same idea behind super sampling. One can also imagine that if we used unifotm sampling instead of direct-light, we would see a lot more noise at each of these light levels.
-
+	<p class="caption">The lighter green represents the cloth, which rests on top of the plane, which is colored in the darker green.
 </p>
 	
         </section>
