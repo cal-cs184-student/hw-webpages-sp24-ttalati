@@ -550,6 +550,16 @@ Evidently with a more coarse mesh representation of the sphere our displacement 
 
         <section>
              <h3>Part 6: Extra Credit</h3>
+		<h4>EC 1: Wind Simulation</h4>
+		<p>I implemented some basic wind simulation. In all honesty it is quite make-shift: I added a randomly generated vector for the external force to represent the wind. The distribution that it was generated from was a multivariate normal. I also added a randomly generated delta vector, which was sampled from a uniform distribution to add some more randomness on top of the wind acceleration vector and shift the position a bit. This would be more accurate since normally wind is given in velocity terms not necessarily the acceleration. To make it work I had to shut off damping because the wind forces and changes would get negated with the damping since changes become smaller and smaller. Overall the result showed an external random force at play, but the motion looks a bit deterministic probably because the mean of the wind forces are basically 0. I think I would probably extend this to get a more accurate wind simulation model, but as a basic implementation it does a fair job.  The motivation for the randomness came through some searches which basically lead to results that simulation of wind in games also relies on random number generators, albeit probably done in a more robust manner.
+
+</p>
+		<p> Attached is a video of the simulation</p>
+
+		<video width="320" height="240" autoplay loop>
+  		<source src="sim.mov" type="video/quicktime">
+  	Your browser does not support the video tag.
+		</video>
 		
         </section>
 			
