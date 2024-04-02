@@ -556,15 +556,39 @@ Evidently with a more coarse mesh representation of the sphere our displacement 
 </p>
 		<p> Attached is a video of the simulation</p>
 
-		<video width="320" height="240" controls>
-  <source src="sim.mov" type="video/quicktime">
-  Your browser does not support the video tag.
-</video>
 		<video controls>
   <source src="sim.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
-
+		<h4>EC 2: Custom Shader—Gray Scale Toon Shader</h4>
+		<p>For the second extra credit I implemented a gray-scale version of a toon shader. Basically a toon shader is a shading technique used for non-photorealistic rendering. At a high level it makes 3D images seem more 2-D and cartoonish. This form of shading and rendering has been utilized in many situations such as immensely popular video games like Zelda. The way that the cartoonish look is derived is by computing the dot product of the lighting vector with respect to the vertex normal vector and then that dot product serves as a lookup table key into a discretized texture map. The idea is the texture map is created in a way to have gradually changing colors to give off the cartoonish shade when the final image is rendered. Due to this discretization the image ends up looking much more 2D if the map is built well. It also is unlike flat shading since we are using vertex normals. For the texture map, as suggested by the reference link I used to learn about toon-shading, I implemented a gray-scale texture map consisting of 32 entries each having successively lighter colors (so black on one end and white on the other). This made me think that another possible extension could be a gray-scale shader that takes a texture map sample and gray-scale it to get a gray-scale image. The results turned out to be pretty good on the sphere and we can see how it looks more cartoonish. Reference link: https://www.eecs.umich.edu/courses/eecs487/f06/sa/chungw.pdf 
+ </p>
+		<p>Below are photos of the toon-shaded rendering and comparing that with the diffuse version.
+</p>
+		
+<div class='im-container'>
+                <div>
+                <div class="label">Diffuse Sphere-Ball</div>
+                <img class="image-container" src="diffbs.png" alt="tp">
+                </div>
+	 	<div>
+                <div class="label">Toon Sphere-Ball</div>
+                <img class="image-container" src="toonbs.png" alt="tp">
+                </div>
+		<div>
+                <div class="label">Diffuse Ball</div>
+                <img class="image-container" src="diffuseball.png" alt="tp">
+                </div>
+		<div>
+                <div class="label">Toon Ball</div>
+                <img class="image-container" src="toonball.png" alt="tp">
+                </div>
+		<div>
+                <div class="label">Cartoon Comparison</div>
+                <img class="image-container" src="mickey.png" alt="tp">
+                </div>
+		</div>
+		<p class='caption'>The differences seem subtle since a sphere is a tough shape to 2D-ize and the reference image is also black and white, but notice how the toon shaded ball has a much darker bottom and discretized changes in color, making it seem more cartoonish when comparing to the reference image. This is the whole idea behind toon shading. There now seem to also exist more complex shading methods to give off a more decisive cartoon look including with color.</p>
 		
         </section>
 			
